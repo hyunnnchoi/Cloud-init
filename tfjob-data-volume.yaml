@@ -11,7 +11,7 @@ spec:
   storageClassName: manual
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /mnt/sdb/share_dir/tfjob
+    path: /home/ubuntu/tethys-v/tfjob
 
 ---
 

@@ -15,8 +15,7 @@ spec:
   accessModes: ["ReadWriteMany"]
   nfs:
     server: 163.152.20.207  
-    path: /mnt/sdb/share_dir/data # NFS server's shared path
-
+    path: /home/ubuntu/tethys-v/data # NFS server's shared path
 # nfs-pvc.yml
 ---
 apiVersion: v1

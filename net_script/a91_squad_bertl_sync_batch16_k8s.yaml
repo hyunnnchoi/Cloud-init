@@ -1,0 +1,108 @@
+apiVersion: kubeflow.org/v1
+kind: "TFJob"
+metadata:
+  name: a91-squad-bertl-sync-batch16
+spec:
+  runPolicy:
+    cleanPodPolicy: None
+  tfReplicaSpecs:
+    CHIEF:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - name: tensorflow
+            command: ["/bin/sh", "-c"]
+            env:
+            - name: ROOT_DATA_DIR
+              value: "/data"
+            args:
+              - JOB=`python /workspace/job_name.py`;
+                mkdir -p /result/a91_squad_bertl_sync_batch16;
+                echo "a91_squad_bertl_sync_batch16" > /workspace/model.txt;
+                STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/a91_squad_bertl_sync_batch16/a91_squad_bertl_sync_batch16_${JOB}_start_time.txt;
+                top -d 0.1 -b | grep python > /result/a91_squad_bertl_sync_batch16/a91_squad_bertl_sync_batch16_${JOB}_cpu.txt
+                & python /workspace/nlp_jobs/bertl_dist_squad.py;
+                ENDTIME=`date "+%H:%M:%S.%N"`; echo "$ENDTIME" > /result/a91_squad_bertl_sync_batch16/a91_squad_bertl_sync_batch16_${JOB}_end_time.txt
+            ports:
+              - containerPort: 2222
+                name: tfjob-port
+            image: potato4332/nlp-keras:0.0.1x
+            imagePullPolicy: IfNotPresent
+            resources:
+              requests:
+                cpu: 1
+                nvidia.com/gpu: 1
+              limits:
+                cpu: 5
+                nvidia.com/gpu: 1
+            volumeMounts:
+            - mountPath: /result
+              name: tfjob-data
+            - mountPath: /data
+              name: tfjob-dataset
+            - mountPath: /dev/shm
+              name: shmdir
+          volumes:
+          - name: tfjob-data
+            persistentVolumeClaim:
+              claimName: tfjob-data-volume-claim
+          - name: tfjob-dataset
+            persistentVolumeClaim:
+              claimName: tfjob-nfs-dataset-storage-claim
+          - name: shmdir
+            emptyDir:
+              medium: Memory
+              sizeLimit: "8G"
+          nodeSelector:
+            twonode: worker
+    WORKER:
+      replicas: 3
+      template:
+        spec:
+          containers:
+          - name: tensorflow
+            command: ["/bin/sh", "-c"]
+            env:
+            - name: ROOT_DATA_DIR
+              value: "/data"
+            args:
+              - JOB=`python /workspace/job_name.py`;
+                mkdir -p /result/a91_squad_bertl_sync_batch16;
+                echo "a91_squad_bertl_sync_batch16" > /workspace/model.txt;
+                STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/a91_squad_bertl_sync_batch16/a91_squad_bertl_sync_batch16_${JOB}_start_time.txt;
+                top -d 0.1 -b | grep python > /result/a91_squad_bertl_sync_batch16/a91_squad_bertl_sync_batch16_${JOB}_cpu.txt
+                & python /workspace/nlp_jobs/bertl_dist_squad.py;
+                ENDTIME=`date "+%H:%M:%S.%N"`; echo "$ENDTIME" > /result/a91_squad_bertl_sync_batch16/a91_squad_bertl_sync_batch16_${JOB}_end_time.txt
+            ports:
+              - containerPort: 2222
+                name: tfjob-port
+            image: potato4332/nlp-keras:0.0.1x
+            imagePullPolicy: IfNotPresent
+            resources:
+              requests:
+                cpu: 1
+                nvidia.com/gpu: 1
+              limits:
+                cpu: 5
+                nvidia.com/gpu: 1
+            volumeMounts:
+            - mountPath: /result
+              name: tfjob-data
+            - mountPath: /data
+              name: tfjob-dataset
+            - mountPath: /dev/shm
+              name: shmdir
+          volumes:
+          - name: tfjob-data
+            persistentVolumeClaim:
+              claimName: tfjob-data-volume-claim
+          - name: tfjob-dataset
+            persistentVolumeClaim:
+              claimName: tfjob-nfs-dataset-storage-claim
+          - name: shmdir
+            emptyDir:
+              medium: Memory
+              sizeLimit: "8G"
+          nodeSelector:
+              twonode: worker

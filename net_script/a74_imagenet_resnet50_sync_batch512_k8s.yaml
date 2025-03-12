@@ -1,0 +1,96 @@
+apiVersion: kubeflow.org/v1
+kind: "TFJob"
+metadata:
+  name: a74-imagenet-resnet50-sync-batch512
+spec:
+  runPolicy:
+    cleanPodPolicy: None
+  tfReplicaSpecs:
+    WORKER:
+      replicas: 4
+      template:
+        spec:
+          containers:
+          - name: tensorflow
+            command: ["/bin/sh", "-c"]
+            args:
+              - cd /tf_cnn_benchmarks/NVML;
+                make;
+                JOB=`python /tf_cnn_benchmarks/job_name.py`;
+                CONTROLLER_HOST=`python -c "import os, json; tf_config = json.loads(os.environ.get('TF_CONFIG') or '{}'); cluster_config = tf_config.get('cluster', {}); controller_host = cluster_config.get('controller'); print(','.join(controller_host))"`;
+                mkdir -p /result/a74_imagenet_resnet50_sync_batch512;
+                top -d 0.1 -b | grep tf_cnn > /result/a74_imagenet_resnet50_sync_batch512/a74_imagenet_resnet50_sync_batch512_${JOB}_cpu.txt &
+                echo "a74_imagenet_resnet50_sync_batch512" > /tf_cnn_benchmarks/model.txt;
+                STARTTIME=`date "+%H:%M:%S.%N"`;
+                echo "$STARTTIME" > /result/a74_imagenet_resnet50_sync_batch512/a74_imagenet_resnet50_sync_batch512_${JOB}_start_time.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet50 --data_name=imagenet --display_every=1 --batch_size=128 --cross_replica_sync=true --num_batches=4118 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/a74_imagenet_resnet50_sync_batch512/a74_imagenet_resnet50_sync_batch512_${JOB}_log.txt;
+                ENDTIME=`date "+%H:%M:%S.%N"`;
+                echo "$ENDTIME" > /result/a74_imagenet_resnet50_sync_batch512/a74_imagenet_resnet50_sync_batch512_${JOB}_end_time.txt
+            ports:
+            - containerPort: 2222
+              name: tfjob-port
+            image: chiefmate/cv-gpu:0.0.2-network
+            imagePullPolicy: IfNotPresent
+            resources:
+              requests:
+                cpu: 1
+                nvidia.com/gpu: 1
+              limits:
+                cpu: 5
+                nvidia.com/gpu: 1
+            volumeMounts:
+            - mountPath: /result
+              name: tfjob-data
+            - mountPath: /dev/shm
+              name: shmdir
+          volumes:
+          - name: tfjob-data
+            persistentVolumeClaim:
+              claimName: tfjob-data-volume-claim
+          - name: shmdir
+            emptyDir:
+              medium: Memory
+              sizeLimit: "8G"
+          nodeSelector:
+            twonode: worker
+    CONTROLLER:
+      replicas: 1
+      template:
+        spec:
+          containers:
+          - name: tensorflow
+            command: ["/bin/sh", "-c"]
+            args:
+              - JOB=`python /tf_cnn_benchmarks/job_name.py`;
+                CONTROLLER_HOST=`python -c "import os, json; tf_config = json.loads(os.environ.get('TF_CONFIG') or '{}'); cluster_config = tf_config.get('cluster', {}); controller_host = cluster_config.get('controller'); print(','.join(controller_host))"`;
+                mkdir -p /result/a74_imagenet_resnet50_sync_batch512;
+                echo "a74_imagenet_resnet50_sync_batch512" > /tf_cnn_benchmarks/model.txt;
+                top -d 0.1 -b | grep tf_cnn > /result/a74_imagenet_resnet50_sync_batch512/a74_imagenet_resnet50_sync_batch512_${JOB}_cpu.txt &
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet50 --data_name=imagenet --display_every=1 --batch_size=128 --cross_replica_sync=true --num_batches=4118 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/a74_imagenet_resnet50_sync_batch512/a74_imagenet_resnet50_sync_batch512_${JOB}_log.txt;
+                ENDTIME=`date "+%H:%M:%S.%N"`;
+                echo "$ENDTIME" > /result/a74_imagenet_resnet50_sync_batch512/a74_imagenet_resnet50_sync_batch512_${JOB}_end_time.txt
+            ports:
+            - containerPort: 2222
+              name: tfjob-port
+            image: chiefmate/cv-cpu:0.0.1-network
+            imagePullPolicy: IfNotPresent
+            resources:
+              requests:
+                cpu: 1
+              limits:
+                cpu: 5
+            volumeMounts:
+            - mountPath: /result
+              name: tfjob-data
+            - mountPath: /dev/shm
+              name: shmdir
+          volumes:
+          - name: tfjob-data
+            persistentVolumeClaim:
+              claimName: tfjob-data-volume-claim
+          - name: shmdir
+            emptyDir:
+              medium: Memory
+              sizeLimit: "8G"
+          nodeSelector:
+            twonode: worker

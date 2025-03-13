@@ -2,6 +2,7 @@
 # To store SQuAD v1.1 dataset for BERT finetuning
 # dataset 저장용 PV/PVC
 # Lambda Labs 이전하면서, nfs -> hostpath 로 변경.
+# Hostpath를 공유 스토리지로 두면 에러 남 -> 각각의 로컬 스토리지로 변경함. 
 
 ---
 apiVersion: v1
@@ -19,7 +20,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: manual
   hostPath:
-    path: /home/ubuntu/tethys-v/data
+    path: /home/tensorspot/data
 
 ---
 apiVersion: v1

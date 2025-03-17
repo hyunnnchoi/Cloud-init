@@ -11,8 +11,8 @@ sudo rm -rf ${SAVEPATH}/*
 echo "$STARTTIME" > ${SAVEPATH}/start_makespan.txt
 
 # ssh on-prem
-ssh ubuntu@164.152.22.184 "sudo sh /home/tensorspot/Cloud-init/gpu.sh" &
-ssh ubuntu@170.9.245.190 "sudo sh /home/tensorspot/Cloud-init/gpu.sh" &
+ssh ubuntu@64.181.210.147 "sudo sh /home/tensorspot/Cloud-init/gpu.sh" &
+ssh ubuntu@64.181.211.138 "sudo sh /home/tensorspot/Cloud-init/gpu.sh" &
 
 # 노드에 작업이 스케줄링될 때까지 대기하는 함수
 wait_for_pod_scheduling() {
@@ -1962,5 +1962,5 @@ LOGTIME=$(($ENDLOGTIME - $STARTLOGTIME))
 kubectl logs -n kube-system --since $(($LOGTIME+5))s kube-scheduler-xsailor-master > ${SAVEPATH}/scheduler_log.txt
 kubectl logs -n kube-system kube-scheduler-xsailor-master  > ${SAVEPATH}/scheduler_full_log.txt
 # On-prem
-ssh ubuntu@164.152.22.184 "sudo sh /home/tensorspot/Cloud-init/gpu_off.sh"
-ssh ubuntu@170.9.245.190 "sudo sh /home/tensorspot/Cloud-init/gpu_off.sh"
+ssh ubuntu@64.181.210.147 "sudo sh /home/tensorspot/Cloud-init/gpu_off.sh"
+ssh ubuntu@64.181.211.138 "sudo sh /home/tensorspot/Cloud-init/gpu_off.sh"

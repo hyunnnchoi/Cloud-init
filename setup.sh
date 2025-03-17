@@ -18,7 +18,7 @@ fi
 # 마스터/워커 노드 인자 확인
 if [ "$#" -ne 1 ]; then
     echo "마스터 노드인지 워커 노드인지 지정해주세요."
-    echo "사용법: sudo ./lambda_labs_setup.sh [master|worker]"
+    echo "사용법: sudo ./lambda_labs_setup.sh [master|workerㄴ
     exit 1
 fi
 
@@ -232,7 +232,7 @@ EOF
     echo "Kubernetes 설치 완료"
 }
 
-de() {
+setup_master_node() {
     echo "====================> Master Node 설정 중..."
     # init
     kubeadm config images list

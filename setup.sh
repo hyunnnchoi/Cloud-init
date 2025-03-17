@@ -18,7 +18,7 @@ fi
 # 마스터/워커 노드 인자 확인
 if [ "$#" -ne 1 ]; then
     echo "마스터 노드인지 워커 노드인지 지정해주세요."
-    echo "사용법: sudo ./lambda_labs_setup.sh [master|workerㄴ
+    echo "사용법: sudo ./lambda_labs_setup.sh [master|worker]"
     exit 1
 fi
 
@@ -241,18 +241,40 @@ setup_master_node() {
     # Flannel 10.244.0.0/16 사용
     kubeadm init --pod-network-cidr=10.244.0.0/16 --node-name xsailor-master
 
-    # 일반 사용자 확인
-    NORMAL_USER=$(logname)
+    # 실제 일반 사용자 확인 (logname 명령이 실패하는 경우 대비)
+    if NORMAL_USER=$(logname 2>/dev/null); then
+        echo "일반 사용자: $NORMAL_USER"
+    else
+        # logname 실패시 sudo를 실행한 실제 사용자 찾기
+        NORMAL_USER=$(who am i | awk '{print $1}')
+        if [ -z "$NORMAL_USER" ]; then
+            # 그래도 실패하면 /home 디렉토리 내의 첫 번째 일반 사용자 사용
+            NORMAL_USER=$(find /home -mindepth 1 -maxdepth 1 -type d -printf "%f\n" | grep -v "lost+found" | head -n 1)
+        fi
+        echo "일반 사용자 감지: $NORMAL_USER"
+    fi
+    
     USER_HOME="/home/$NORMAL_USER"
+    
+    # root 사용자용 kubeconfig 설정
+    echo "root 사용자 kubeconfig 설정..."
+    mkdir -p /root/.kube
+    cp -f /etc/kubernetes/admin.conf /root/.kube/config
+    chown root:root /root/.kube/config
+    export KUBECONFIG=/root/.kube/config
 
-    # config 설정 - 간결한 방식으로 수정
+    # 일반 사용자용 kubeconfig 설정
+    echo "일반 사용자 kubeconfig 설정..."
     mkdir -p $USER_HOME/.kube
-    cp -i /etc/kubernetes/admin.conf $USER_HOME/.kube/config
+    cp -f /etc/kubernetes/admin.conf $USER_HOME/.kube/config
     chown -R $NORMAL_USER:$NORMAL_USER $USER_HOME/.kube
-
+    
+    # 환경 변수 설정 (.bashrc에 추가)
+    echo 'export KUBECONFIG=$HOME/.kube/config' >> $USER_HOME/.bashrc
+    
     # 중요: 공유 스토리지에 config 파일 복사
     mkdir -p $USER_HOME/tethys-v
-    cp $USER_HOME/.kube/config $USER_HOME/tethys-v/config
+    cp -f /etc/kubernetes/admin.conf $USER_HOME/tethys-v/config
     chown -R $NORMAL_USER:$NORMAL_USER $USER_HOME/tethys-v
 
     echo "마스터 노드 kubeconfig를 공유 스토리지에 복사했습니다: ~/tethys-v/config"
@@ -261,18 +283,37 @@ setup_master_node() {
     echo -e "\n워커 노드 조인 명령어 정보:"
     JOIN_TOKEN=$(kubeadm token create)
     HASH=$(openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //')
-    IP_ADDRESS=$(ip -4 addr show eno1 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+    
+    # 네트워크 인터페이스가 eno1이 아닐 경우 대비
+    if ip -4 addr show eno1 >/dev/null 2>&1; then
+        IP_ADDRESS=$(ip -4 addr show eno1 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+    else
+        # 다른 인터페이스에서 IPv4 주소 찾기
+        IP_ADDRESS=$(ip -4 addr show | grep -v '127.0.0.1' | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -n 1)
+    fi
 
     echo -e "\n다음 명령어를 워커 노드에서 실행하세요:\n"
     echo "sudo kubeadm join ${IP_ADDRESS}:6443 --token ${JOIN_TOKEN} --discovery-token-ca-cert-hash sha256:${HASH} --node-name xsailor-worker1"
 
     # 설정을 파일로 저장
-    echo "sudo kubeadm join ${IP_ADDRESS}:6443 --token ${JOIN_TOKEN} --discovery-token-ca-cert-hash sha256:${HASH} --node-name xsailor-worker1" > $USER_HOME/worker_join_command.txt
+    JOIN_COMMAND="sudo kubeadm join ${IP_ADDRESS}:6443 --token ${JOIN_TOKEN} --discovery-token-ca-cert-hash sha256:${HASH} --node-name xsailor-worker1"
+    echo "$JOIN_COMMAND" > $USER_HOME/worker_join_command.txt
     chown $NORMAL_USER:$NORMAL_USER $USER_HOME/worker_join_command.txt
+    echo "$JOIN_COMMAND" > /root/worker_join_command.txt  # root 사용자를 위한 복사본
+
+    # Flannel 네트워크 설치
+    echo "Flannel 네트워크 설치 중..."
+    # root 권한으로 직접 실행
+    kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+    
+    # 마스터 노드 taint 제거 (모든 노드에서 파드 실행 가능하도록)
+    kubectl taint nodes --all node-role.kubernetes.io/master- || true
+    
+    echo "Kubernetes 노드 상태:"
+    kubectl get nodes
 
     echo "Master Node 설정 완료"
 }
-
 setup_worker_node() {
     echo "====================> Worker Node 설정 중..."
     # 일반 사용자 확인
@@ -304,31 +345,31 @@ setup_worker_node() {
 
 install_flannel() {
     echo "====================> Flannel 설치 중..."
-    # 일반 사용자로 실행
-    su - $(logname) -c "kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml"
+    # logname 대신 직접 kubectl 사용
+    kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 
     # 노드 상태 확인
     echo -e "\n노드 상태 확인:"
-    su - $(logname) -c "kubectl get node"
+    kubectl get nodes
 
     # 마스터 노드 taint 제거 (모든 노드에서 파드 실행 가능하도록)
-    su - $(logname) -c "kubectl taint nodes --all node-role.kubernetes.io/master-"
+    kubectl taint nodes --all node-role.kubernetes.io/master- || true
 
     echo -e "\nFlannel 설치 완료"
 }
 
 install_nvidia_device_plugin() {
     echo "====================> NVIDIA device plugin 설치 중..."
-    # nvidia-device-plugin 설치
-    su - $(logname) -c "kubectl create -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.10.0/nvidia-device-plugin.yml"
+    # 직접 kubectl 사용
+    kubectl create -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.10.0/nvidia-device-plugin.yml
 
     # 노드 개수만큼 pod가 있는지 확인
     echo -e "\nNVIDIA device plugin pods:"
-    su - $(logname) -c "kubectl get pod -n kube-system | grep nvidia"
+    kubectl get pod -n kube-system | grep nvidia
 
     # 각 노드별 GPU 개수 확인
     echo -e "\n각 노드별 GPU 개수:"
-    su - $(logname) -c "kubectl get nodes \"-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\\.com/gpu\""
+    kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu"
 
     echo -e "\nNVIDIA device plugin 설치 완료"
 }
@@ -356,25 +397,25 @@ EOF
 
 setup_node_selector() {
     echo "====================> Node selector 설정 중..."
-    su - $(logname) -c "kubectl label no xsailor-master twonode=worker"
-    su - $(logname) -c "kubectl label no xsailor-worker1 twonode=worker"
+    kubectl label nodes xsailor-master twonode=worker || true
+    kubectl label nodes xsailor-worker1 twonode=worker || true
 
     echo "Node selector 설정 완료"
 }
 
-install_training_operator() { # Master node에서만 실행
+install_training_operator() {
     echo "====================> Training Operator 설치 중..."
-    su - $(logname) -c "kubectl apply -k \"github.com/kubeflow/training-operator/manifests/overlays/standalone?ref=v1.7.0\""
+    kubectl apply -k "github.com/kubeflow/training-operator/manifests/overlays/standalone?ref=v1.7.0"
 
     echo "Training Operator 설치 완료"
 }
 
-setup_pv_pvc() { # Master node에서만 실행
+setup_pv_pvc() {
     echo "====================> PV, PVC 설정 중..."
     cd /home/tensorspot/Cloud-init
 
-    su - $(logname) -c "kubectl create -f /home/tensorspot/Cloud-init/tfjob-data-volume.yaml"
-    su - $(logname) -c "kubectl create -f /home/tensorspot/Cloud-init/tfjob-nfs-dataset-storage-volume.yaml"
+    kubectl create -f /home/tensorspot/Cloud-init/tfjob-data-volume.yaml
+    kubectl create -f /home/tensorspot/Cloud-init/tfjob-nfs-dataset-storage-volume.yaml
 
     echo "PV, PVC 설정 완료"
 }
@@ -391,10 +432,10 @@ pull_docker_images() { # 양 쪽 노드 모두에서 실행
 setup_bandwidth_limit() {
     echo "====================> 대역폭 제한 설정 중..."
     # 현재 tc 상태 확인
-    sh /home/tensorspot/Cloud-init/eno1_tc_10g.sh show
+    sh /home/tensorspot/Cloud-init/eno1_tc_10G.sh show
 
     # tc 시작 (대역폭 제한 시작)
-    sh /home/tensorspot/Cloud-init/eno1_tc_10g.sh start
+    sh /home/tensorspot/Cloud-init/eno1_tc_10G.sh start
 
     echo "대역폭 제한 설정 완료"
 }
@@ -403,10 +444,10 @@ setup_iperf() {
     echo "====================> iperf 설정 중..."
     cd /home/tensorspot/Cloud-init
 
-    su - $(logname) -c "kubectl create -f /home/tensorspot/Cloud-init/iperf.yaml"
+    kubectl create -f /home/tensorspot/Cloud-init/iperf.yaml
 
     echo "iperf 서버 파드 정보:"
-    su - $(logname) -c "kubectl get pods | grep iperf"
+    kubectl get pods | grep iperf
 
     echo -e "\n서버 파드에 접속하여 다음 명령어 실행: /usr/bin/iperf3 -s -p 5202"
     echo "클라이언트 파드에 접속하여 다음 명령어 실행: /usr/bin/iperf3 -c [서버파드IP] -p 5202 -P 32 -t 10"
@@ -428,12 +469,12 @@ common_setup() {
     setup_bandwidth_limit
 }
 
-# 마스터 노드 설정
 if [[ "$NODE_TYPE" == "master" ]]; then
     echo "마스터 노드 설정을 시작합니다..."
     common_setup
-    setup_master_node
-    install_flannel
+    setup_master_node  # de 함수 대신 setup_master_node 사용
+    # 이미 setup_master_node에서 flannel을 설치했으므로 아래 라인은 선택적으로 주석 처리
+    # install_flannel
     install_nvidia_device_plugin
     fix_gpu_issues
     setup_node_selector

@@ -1,2 +1,2 @@
 #!/bin/bash
-/NVML/NVML > /tfjob/gpu_worker2.txt
+/NVML/NVML > /home/tensorspot/tfjob/gpu_worker2.txt

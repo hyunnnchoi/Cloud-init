@@ -14,7 +14,6 @@ echo "$STARTTIME" > ${SAVEPATH}/start_makespan.txt
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@64.181.210.147 "sudo sh /home/tensorspot/Cloud-init/gpu.sh" &
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@64.181.211.138 "sudo sh /home/tensorspot/Cloud-init/gpu.sh" &
 
-
 # 노드에 작업이 스케줄링될 때까지 대기하는 함수
 wait_for_pod_scheduling() {
     JOB_NAME=$1
@@ -25,11 +24,24 @@ wait_for_pod_scheduling() {
 
     # 모든 워커/치프 포드가 노드에 할당될 때까지 대기
     SCHEDULED_PODS=0
+    TIMEOUT=300  # 5분 타임아웃
+    START_TIME=$(date +%s)
 
     while [ $SCHEDULED_PODS -lt $WORKER_COUNT ]
     do
         # 현재 이 작업의 Running 상태이거나 ContainerCreating 상태인 포드 수 계산
         SCHEDULED_PODS=$(kubectl get pods | grep $JOB_NAME_DASH | grep -v Pending | wc -l)
+
+        # 현재 시간 체크
+        CURRENT_TIME=$(date +%s)
+        ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+
+        # 타임아웃 체크
+        if [ $ELAPSED_TIME -gt $TIMEOUT ]; then
+            echo "WARNING: Timeout waiting for pods to be scheduled. Continuing anyway."
+            kubectl get pods | grep $JOB_NAME_DASH
+            break
+        fi
 
         if [ $SCHEDULED_PODS -lt $WORKER_COUNT ]; then
             sleep 1
@@ -44,20 +56,39 @@ wait_for_pod_scheduling() {
     done
 }
 
-# 자원과 arrival_time을 고려하여 대기하는 함수
+# 자원과 arrival_time을 고려하여 대기하는 함수 - 개선된 버전
 wait_for_resources_or_arrival() {
     ARRIVAL_TIME=$1
     JOB_NAME=$2
     WORKER_NUM=$3
 
-    # 자원 가용성 확인 (실행 중인 워커/치프 수 + Pending 포드 수)
-    WORKERNUM=$(kubectl get pod -o wide | grep -e "worker-" -e "chief-" | wc -l)
-    PENDING_PODS=$(kubectl get pods | grep -e "Pending" | wc -l)
-    TOTAL_RESOURCES_USED=$((WORKERNUM + PENDING_PODS))
+    echo "Checking resources for job ${JOB_NAME} (arrival time: ${ARRIVAL_TIME}s)"
 
-    # 자원이 부족한 경우 대기
-    while [ $TOTAL_RESOURCES_USED -gt $((8 - WORKER_NUM)) ]
-    do
+    while true; do
+        # 자원 가용성 확인
+        WORKERNUM=$(kubectl get pod -o wide | grep -e "worker-" -e "chief-" | wc -l)
+        PENDING_PODS=$(kubectl get pods | grep -e "Pending" | wc -l)
+        TOTAL_RESOURCES_USED=$((WORKERNUM + PENDING_PODS))
+
+        # 디버그 정보 출력
+        echo "DEBUG: Available GPUs=$((8 - TOTAL_RESOURCES_USED)), Required GPUs=${WORKER_NUM}"
+
+        # 자원이 충분한 경우 즉시 작업 시작
+        if [ $TOTAL_RESOURCES_USED -le $((8 - WORKER_NUM)) ]; then
+            echo "Resources available for job ${JOB_NAME}. Starting immediately."
+            return 0
+        fi
+
+        # arrival time 체크
+        CURRENT_EPOCH=$(date +%s)
+        TIME_PASSED=$((CURRENT_EPOCH - STARTEPOCH))
+
+        # arrival time이 도래한 경우 즉시 작업 시작 (자원이 부족해도)
+        if [ $TIME_PASSED -ge $ARRIVAL_TIME ]; then
+            echo "Arrival time reached for job ${JOB_NAME}. Starting regardless of resource availability."
+            return 0
+        fi
+
         # 완료된 작업 확인 및 정리
         COMPLETED=$(kubectl get pod -o wide | grep Completed | awk '{print $1}' | sed -n '1p')
         if [ -n "${COMPLETED}" ]; then
@@ -85,36 +116,16 @@ wait_for_resources_or_arrival() {
             kubectl delete -f ${TFPATH}/net_script/${COMPLETED_JOB}_spot.yaml
         fi
 
-        # arrival_time 체크
-        CURRENT_EPOCH=$(date +%s)
-        TIME_PASSED=$((CURRENT_EPOCH - STARTEPOCH))
-
-        # arrival_time이 도래했고 자원이 충분하면 루프 종료 시도
-        if [ $TIME_PASSED -ge $ARRIVAL_TIME ]; then
-            WORKERNUM=$(kubectl get pod -o wide | grep -e "worker-" -e "chief-" | wc -l)
-            PENDING_PODS=$(kubectl get pods | grep -e "Pending" | wc -l)
-            TOTAL_RESOURCES_USED=$((WORKERNUM + PENDING_PODS))
-
-            if [ $TOTAL_RESOURCES_USED -le $((8 - WORKER_NUM)) ]; then
-                # 자원이 충분하고 arrival_time도 도래했으므로 루프 종료 준비
-                break
-            fi
+        # 남은 시간 계산 및 표시
+        TIME_REMAINING=$((ARRIVAL_TIME - TIME_PASSED))
+        if [ $TIME_REMAINING -gt 0 ]; then
+            echo "Waiting for resources or arrival time for job ${JOB_NAME} (Remaining: ${TIME_REMAINING}s)"
+        else
+            echo "Arrival time already passed, waiting for resources to become available"
         fi
 
         sleep 0.1s
-        WORKERNUM=$(kubectl get pod -o wide | grep -e "worker-" -e "chief-" | wc -l)
-        PENDING_PODS=$(kubectl get pods | grep -e "Pending" | wc -l)
-        TOTAL_RESOURCES_USED=$((WORKERNUM + PENDING_PODS))
     done
-
-    # 자원은 충분하지만 arrival_time이 아직 도래하지 않은 경우 대기
-    CURRENT_EPOCH=$(date +%s)
-    TIME_DIFF=$((ARRIVAL_TIME - (CURRENT_EPOCH - STARTEPOCH)))
-
-    if [ $TIME_DIFF -gt 0 ]; then
-        echo "Waiting for arrival time of ${JOB_NAME}: $TIME_DIFF seconds"
-        sleep $TIME_DIFF
-    fi
 }
 
 
@@ -1962,6 +1973,7 @@ ENDLOGTIME=$(($(date +%s%N)/1000000000))
 LOGTIME=$(($ENDLOGTIME - $STARTLOGTIME))
 kubectl logs -n kube-system --since $(($LOGTIME+5))s kube-scheduler-xsailor-master > ${SAVEPATH}/scheduler_log.txt
 kubectl logs -n kube-system kube-scheduler-xsailor-master  > ${SAVEPATH}/scheduler_full_log.txt
+
 # On-prem
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@64.181.210.147 "sudo sh /home/tensorspot/Cloud-init/gpu_off.sh"
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@64.181.211.138 "sudo sh /home/tensorspot/Cloud-init/gpu_off.sh"

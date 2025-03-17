@@ -16,7 +16,7 @@ spec:
             "tensorspot/net_request": "0"
             "tensorspot/gpu_limit": "1.0"
             "tensorspot/gpu_request": "1.0"
-            "tensorspot/gpu_mem": "16160000000"
+            "tensorspot/gpu_mem": "85899345920"
             "tensorspot/placement_policy": "spot"
         spec:
           containers:
@@ -76,7 +76,7 @@ spec:
             "tensorspot/net_request": "0"
             "tensorspot/gpu_limit": "1.0"
             "tensorspot/gpu_request": "1.0"
-            "tensorspot/gpu_mem": "16160000000"
+            "tensorspot/gpu_mem": "85899345920"
             "tensorspot/placement_policy": "spot"
         spec:
           containers:

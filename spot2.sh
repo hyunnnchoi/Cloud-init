@@ -45,15 +45,18 @@ wait_for_pod_scheduling() {
 
 # 자원과 arrival_time을 고려하여 대기하는 함수
 wait_for_resources_or_arrival() {
-    ARRIVAL_TIME=$1
+    ARRIVAL_TIME_FLOAT=$1
     JOB_NAME=$2
     WORKER_NUM=$3
-
+    
+    # 부동 소수점 시간을 정수로 변환 (소수점 값은 무시)
+    ARRIVAL_TIME=${ARRIVAL_TIME_FLOAT%.*}
+    
     # 자원 가용성 확인 (실행 중인 워커/치프 수 + Pending 포드 수)
     WORKERNUM=$(kubectl get pod -o wide | grep -e "worker-" -e "chief-" | wc -l)
     PENDING_PODS=$(kubectl get pods | grep -e "Pending" | wc -l)
     TOTAL_RESOURCES_USED=$((WORKERNUM + PENDING_PODS))
-
+    
     # 자원이 부족한 경우 대기
     while [ $TOTAL_RESOURCES_USED -gt $((8 - WORKER_NUM)) ]
     do
@@ -83,33 +86,33 @@ wait_for_resources_or_arrival() {
             echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${COMPLETED_JOB}_job_finished.txt
             kubectl delete -f ${TFPATH}/net_script/${COMPLETED_JOB}_spot.yaml
         fi
-
+        
         # arrival_time 체크
         CURRENT_EPOCH=$(date +%s)
         TIME_PASSED=$((CURRENT_EPOCH - STARTEPOCH))
-
+        
         # arrival_time이 도래했고 자원이 충분하면 루프 종료 시도
         if [ $TIME_PASSED -ge $ARRIVAL_TIME ]; then
             WORKERNUM=$(kubectl get pod -o wide | grep -e "worker-" -e "chief-" | wc -l)
             PENDING_PODS=$(kubectl get pods | grep -e "Pending" | wc -l)
             TOTAL_RESOURCES_USED=$((WORKERNUM + PENDING_PODS))
-
+            
             if [ $TOTAL_RESOURCES_USED -le $((8 - WORKER_NUM)) ]; then
                 # 자원이 충분하고 arrival_time도 도래했으므로 루프 종료 준비
                 break
             fi
         fi
-
-        sleep 0.1s
+        
+        sleep 0.1
         WORKERNUM=$(kubectl get pod -o wide | grep -e "worker-" -e "chief-" | wc -l)
         PENDING_PODS=$(kubectl get pods | grep -e "Pending" | wc -l)
         TOTAL_RESOURCES_USED=$((WORKERNUM + PENDING_PODS))
     done
-
+    
     # 자원은 충분하지만 arrival_time이 아직 도래하지 않은 경우 대기
     CURRENT_EPOCH=$(date +%s)
     TIME_DIFF=$((ARRIVAL_TIME - (CURRENT_EPOCH - STARTEPOCH)))
-
+    
     if [ $TIME_DIFF -gt 0 ]; then
         echo "Waiting for arrival time of ${JOB_NAME}: $TIME_DIFF seconds"
         sleep $TIME_DIFF

@@ -3,12 +3,12 @@
 STARTTIME=`date "+%H:%M:%S.%N"`
 STARTEPOCH=`date +%s`  # 스크립트 시작 시간 (epoch 초)
 STARTLOGTIME=$(($(date +%s%N)/1000000000))
-TFPATH="/home/jhlee21/tfjob"
-# GCP
-SAVEPATH="/home/jhlee21/share_dir/tfjob"
+TFPATH="/home/tensorspot/Cloud-init" # Job(yaml) 저장 위치
+# xsailor
+SAVEPATH="/home/tensorspot/tfjob" # 결과 저장 위치
+
 sudo rm -rf ${SAVEPATH}/*
 echo "$STARTTIME" > ${SAVEPATH}/start_makespan.txt
-# GCP
 
 # 노드에 작업이 스케줄링될 때까지 대기하는 함수
 wait_for_pod_scheduling() {

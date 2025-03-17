@@ -10,33 +10,34 @@ SAVEPATH="/home/tensorspot/tfjob" # 결과 저장 위치
 sudo rm -rf ${SAVEPATH}/*
 echo "$STARTTIME" > ${SAVEPATH}/start_makespan.txt
 
+
 # 노드에 작업이 스케줄링될 때까지 대기하는 함수
 wait_for_pod_scheduling() {
-    JOB_NAME=$1
-    WORKER_COUNT=$2
-    JOB_NAME_DASH=$(echo $JOB_NAME | tr '_' '-')
+   JOB_NAME=$1
+   WORKER_COUNT=$2
+   JOB_NAME_DASH=$(echo $JOB_NAME | tr '_' '-')
 
-    echo "Waiting for job $JOB_NAME to be scheduled to nodes..."
+   echo "Waiting for job $JOB_NAME to be scheduled to nodes..."
 
-    # 모든 워커/치프 포드가 노드에 할당될 때까지 대기
-    SCHEDULED_PODS=0
+   # 모든 워커/치프 포드가 노드에 할당될 때까지 대기
+   SCHEDULED_PODS=0
 
-    while [ $SCHEDULED_PODS -lt $WORKER_COUNT ]
-    do
-        # 현재 이 작업의 Running 상태이거나 ContainerCreating 상태인 포드 수 계산
-        SCHEDULED_PODS=$(kubectl get pods | grep $JOB_NAME_DASH | grep -v Pending | wc -l)
+   while [ $SCHEDULED_PODS -lt $WORKER_COUNT ]
+   do
+       # 현재 이 작업의 Running 상태이거나 ContainerCreating 상태인 포드 수 계산
+       SCHEDULED_PODS=$(kubectl get pods | grep $JOB_NAME_DASH | grep -v Pending | wc -l)
 
-        if [ $SCHEDULED_PODS -lt $WORKER_COUNT ]; then
-            sleep 1
-            echo "Waiting for $JOB_NAME pods to be scheduled ($SCHEDULED_PODS/$WORKER_COUNT scheduled)"
-        else
-            echo "All pods for $JOB_NAME have been scheduled to nodes"
-            kubectl get pods -o wide | grep $JOB_NAME_DASH
-            echo "Node allocation for $JOB_NAME:" > ${SAVEPATH}/${JOB_NAME}_node_allocation.txt
-            kubectl get pods -o wide | grep $JOB_NAME_DASH | awk '{print $1 "\t" $7}' >> ${SAVEPATH}/${JOB_NAME}_node_allocation.txt
-            break
-        fi
-    done
+       if [ $SCHEDULED_PODS -lt $WORKER_COUNT ]; then
+           sleep 1
+           echo "Waiting for $JOB_NAME pods to be scheduled ($SCHEDULED_PODS/$WORKER_COUNT scheduled)"
+       else
+           echo "All pods for $JOB_NAME have been scheduled to nodes"
+           kubectl get pods -o wide | grep $JOB_NAME_DASH
+           echo "Node allocation for $JOB_NAME:" > ${SAVEPATH}/${JOB_NAME}_node_allocation.txt
+           kubectl get pods -o wide | grep $JOB_NAME_DASH | awk '{print $1 "\t" $7}' >> ${SAVEPATH}/${JOB_NAME}_node_allocation.txt
+           break
+       fi
+   done
 }
 
 # 자원과 arrival_time을 고려하여 대기하는 함수 - 개선된 버전
@@ -54,10 +55,10 @@ wait_for_resources_or_arrival() {
         TOTAL_RESOURCES_USED=$((WORKERNUM + PENDING_PODS))
 
         # 디버그 정보 출력
-        echo "DEBUG: Available GPUs=$((8 - TOTAL_RESOURCES_USED)), Required GPUs=${WORKER_NUM}"
+        echo "DEBUG: Available GPUs=$((16 - TOTAL_RESOURCES_USED)), Required GPUs=${WORKER_NUM}"
 
         # 자원이 충분한 경우 즉시 작업 시작
-        if [ $TOTAL_RESOURCES_USED -le $((8 - WORKER_NUM)) ]; then
+        if [ $TOTAL_RESOURCES_USED -le $((16 - WORKER_NUM)) ]; then
             echo "Resources available for job ${JOB_NAME}. Starting immediately."
             return 0
         fi

@@ -3,12 +3,16 @@
 STARTTIME=`date "+%H:%M:%S.%N"`
 STARTEPOCH=`date +%s`  # 스크립트 시작 시간 (epoch 초)
 STARTLOGTIME=$(($(date +%s%N)/1000000000))
-TFPATH="/home/jhlee21/tfjob"
-# GCP
-SAVEPATH="/home/jhlee21/share_dir/tfjob"
+TFPATH="/home/tensorspot/Cloud-init" # Job(yaml) 저장 위치
+# xsailor
+SAVEPATH="/home/tensorspot/tfjob" # 결과 저장 위치
+
 sudo rm -rf ${SAVEPATH}/*
 echo "$STARTTIME" > ${SAVEPATH}/start_makespan.txt
-# GCP
+
+# ssh on-prem
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@64.181.210.147 "sudo sh /home/tensorspot/Cloud-init/gpu.sh" &
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@64.181.211.138 "sudo sh /home/tensorspot/Cloud-init/gpu.sh" &
 
 # 노드에 작업이 스케줄링될 때까지 대기하는 함수
 wait_for_pod_scheduling() {
@@ -20,11 +24,24 @@ wait_for_pod_scheduling() {
 
     # 모든 워커/치프 포드가 노드에 할당될 때까지 대기
     SCHEDULED_PODS=0
+    TIMEOUT=300  # 5분 타임아웃
+    START_TIME=$(date +%s)
 
     while [ $SCHEDULED_PODS -lt $WORKER_COUNT ]
     do
         # 현재 이 작업의 Running 상태이거나 ContainerCreating 상태인 포드 수 계산
         SCHEDULED_PODS=$(kubectl get pods | grep $JOB_NAME_DASH | grep -v Pending | wc -l)
+
+        # 현재 시간 체크
+        CURRENT_TIME=$(date +%s)
+        ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+
+        # 타임아웃 체크
+        if [ $ELAPSED_TIME -gt $TIMEOUT ]; then
+            echo "WARNING: Timeout waiting for pods to be scheduled. Continuing anyway."
+            kubectl get pods | grep $JOB_NAME_DASH
+            break
+        fi
 
         if [ $SCHEDULED_PODS -lt $WORKER_COUNT ]; then
             sleep 1
@@ -1954,5 +1971,9 @@ ENDTIME=`date "+%H:%M:%S.%N"`
 echo "$ENDTIME" > ${SAVEPATH}/end_makespan.txt
 ENDLOGTIME=$(($(date +%s%N)/1000000000))
 LOGTIME=$(($ENDLOGTIME - $STARTLOGTIME))
+kubectl logs -n kube-system --since $(($LOGTIME+5))s kube-scheduler-xsailor-master > ${SAVEPATH}/scheduler_log.txt
 kubectl logs -n kube-system kube-scheduler-xsailor-master  > ${SAVEPATH}/scheduler_full_log.txt
-kubectl logs -n kube-system tensorspot-scheduler > ${SAVEPATH}/scheduler_log.txt
+
+# On-prem
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@64.181.210.147 "sudo sh /home/tensorspot/Cloud-init/gpu_off.sh"
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@64.181.211.138 "sudo sh /home/tensorspot/Cloud-init/gpu_off.sh"

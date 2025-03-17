@@ -232,7 +232,7 @@ EOF
     echo "Kubernetes 설치 완료"
 }
 
-setup_master_node() {
+de() {
     echo "====================> Master Node 설정 중..."
     # init
     kubeadm config images list
@@ -241,19 +241,21 @@ setup_master_node() {
     # Flannel 10.244.0.0/16 사용
     kubeadm init --pod-network-cidr=10.244.0.0/16 --node-name xsailor-master
 
-    # 일반 사용자 홈 디렉토리 확인
+    # 일반 사용자 확인
     NORMAL_USER=$(logname)
     USER_HOME="/home/$NORMAL_USER"
 
-    # config
+    # config 설정 - 간결한 방식으로 수정
     mkdir -p $USER_HOME/.kube
     cp -i /etc/kubernetes/admin.conf $USER_HOME/.kube/config
     chown -R $NORMAL_USER:$NORMAL_USER $USER_HOME/.kube
 
-    # 공유 디렉토리 생성 및 config 복사
+    # 중요: 공유 스토리지에 config 파일 복사
     mkdir -p $USER_HOME/tethys-v
     cp $USER_HOME/.kube/config $USER_HOME/tethys-v/config
     chown -R $NORMAL_USER:$NORMAL_USER $USER_HOME/tethys-v
+
+    echo "마스터 노드 kubeconfig를 공유 스토리지에 복사했습니다: ~/tethys-v/config"
 
     # Join 토큰 생성 및 출력
     echo -e "\n워커 노드 조인 명령어 정보:"
@@ -273,17 +275,22 @@ setup_master_node() {
 
 setup_worker_node() {
     echo "====================> Worker Node 설정 중..."
-    # 일반 사용자 홈 디렉토리 확인
+    # 일반 사용자 확인
     NORMAL_USER=$(logname)
     USER_HOME="/home/$NORMAL_USER"
 
-    # 마스터 노드에서 생성한 config 파일 복사
+    # 중요: 공유 스토리지에서 config 파일 가져오기
     mkdir -p $USER_HOME/.kube
-    mkdir -p $USER_HOME/tethys-v
 
-    # 이 부분은 사용자가 직접 실행해야 할 수 있음
-    echo "마스터 노드에서 config 파일을 복사하세요."
-    echo "예: scp master_node:/home/username/tethys-v/config ~/tethys-v/"
+    # tethys-v는 이미 공유 스토리지로 마운트되어 있다고 가정
+    if [ -f $USER_HOME/tethys-v/config ]; then
+        cp $USER_HOME/tethys-v/config $USER_HOME/.kube/config
+        chown $(id -u):$(id -g) $USER_HOME/.kube/config
+        echo "공유 스토리지에서 kubeconfig를 성공적으로 복사했습니다."
+    else
+        echo "오류: 공유 스토리지에서 kubeconfig를 찾을 수 없습니다!"
+        echo "마스터 노드에서 config 파일이 ~/tethys-v/config에 복사되었는지 확인하세요."
+    fi
 
     # Join 명령어 안내
     echo -e "\n마스터 노드에서 출력된 join 명령어를 실행하세요."
@@ -384,10 +391,10 @@ pull_docker_images() { # 양 쪽 노드 모두에서 실행
 setup_bandwidth_limit() {
     echo "====================> 대역폭 제한 설정 중..."
     # 현재 tc 상태 확인
-    sh /home/tensorspot/Cloud-init/eno1_tc10g.sh show
+    sh /home/tensorspot/Cloud-init/eno1_tc_10g.sh show
 
     # tc 시작 (대역폭 제한 시작)
-    sh /home/tensorspot/Cloud-init/eno1_tc10g.sh start
+    sh /home/tensorspot/Cloud-init/eno1_tc_10g.sh start
 
     echo "대역폭 제한 설정 완료"
 }

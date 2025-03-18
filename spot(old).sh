@@ -9,6 +9,8 @@ SAVEPATH="/home/tensorspot/tfjob"
 sudo rm -rf ${SAVEPATH}/*
 echo "$STARTTIME" > ${SAVEPATH}/start_makespan.txt
 # GCP
+gcloud compute ssh --zone us-central1-a xsailor-master --command "sudo sh /home/jhlee21/gpu.sh &" &
+gcloud compute ssh --zone us-central1-a xsailor-worker1 --command "sudo sh /home/jhlee21/gpu.sh &" &
 
 # 노드에 작업이 스케줄링될 때까지 대기하는 함수
 wait_for_pod_scheduling() {
@@ -1985,3 +1987,5 @@ ENDLOGTIME=$(($(date +%s%N)/1000000000))
 LOGTIME=$(($ENDLOGTIME - $STARTLOGTIME))
 kubectl logs -n kube-system kube-scheduler-xsailor-master  > ${SAVEPATH}/scheduler_full_log.txt
 kubectl logs -n kube-system tensorspot-scheduler > ${SAVEPATH}/scheduler_log.txt
+gcloud compute ssh --zone us-central1-a xsailor-master --command "sudo sh /home/jhlee21/gpu_off.sh"
+gcloud compute ssh --zone us-central1-a xsailor-worker1 --command "sudo sh /home/jhlee21/gpu_off.sh"

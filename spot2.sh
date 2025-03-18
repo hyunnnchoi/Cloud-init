@@ -16,21 +16,21 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@64.181.21
 
 # 노드에 작업이 스케줄링될 때까지 대기하는 함수
 wait_for_pod_scheduling() {
-    JOB_NAME=$1
-    WORKER_COUNT=$2
-    JOB_NAME_DASH=$(echo $JOB_NAME | tr '_' '-')
+   JOB_NAME=$1
+   WORKER_COUNT=$2
+   JOB_NAME_DASH=$(echo $JOB_NAME | tr '_' '-')
 
-    echo "Waiting for job $JOB_NAME to be scheduled to nodes..."
+   echo "Waiting for job $JOB_NAME to be scheduled to nodes..."
 
     # 모든 워커/치프 포드가 노드에 할당될 때까지 대기
     SCHEDULED_PODS=0
     TIMEOUT=300  # 5분 타임아웃
     START_TIME=$(date +%s)
 
-    while [ $SCHEDULED_PODS -lt $WORKER_COUNT ]
-    do
-        # 현재 이 작업의 Running 상태이거나 ContainerCreating 상태인 포드 수 계산
-        SCHEDULED_PODS=$(kubectl get pods | grep $JOB_NAME_DASH | grep -v Pending | wc -l)
+   while [ $SCHEDULED_PODS -lt $WORKER_COUNT ]
+   do
+       # 현재 이 작업의 Running 상태이거나 ContainerCreating 상태인 포드 수 계산
+       SCHEDULED_PODS=$(kubectl get pods | grep $JOB_NAME_DASH | grep -v Pending | wc -l)
 
         # 현재 시간 체크
         CURRENT_TIME=$(date +%s)
@@ -71,10 +71,10 @@ wait_for_resources_or_arrival() {
         TOTAL_RESOURCES_USED=$((WORKERNUM + PENDING_PODS))
 
         # 디버그 정보 출력
-        echo "DEBUG: Available GPUs=$((8 - TOTAL_RESOURCES_USED)), Required GPUs=${WORKER_NUM}"
+        echo "DEBUG: Available GPUs=$((16 - TOTAL_RESOURCES_USED)), Required GPUs=${WORKER_NUM}"
 
         # 자원이 충분한 경우 즉시 작업 시작
-        if [ $TOTAL_RESOURCES_USED -le $((8 - WORKER_NUM)) ]; then
+        if [ $TOTAL_RESOURCES_USED -le $((16 - WORKER_NUM)) ]; then
             echo "Resources available for job ${JOB_NAME}. Starting immediately."
             return 0
         fi

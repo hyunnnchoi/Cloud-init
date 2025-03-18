@@ -13,7 +13,7 @@ spec:
           annotations:
             "tensorspot/num_controller": "1"
             "tensorspot/num_worker": "4"
-            "tensorspot/net_request": "0"
+            "tensorspot/net_request": "1178"
             "tensorspot/gpu_limit": "1.0"
             "tensorspot/gpu_request": "1.0"
             "tensorspot/gpu_mem": "85899345920"
@@ -38,7 +38,7 @@ spec:
             ports:
             - containerPort: 2222
               name: tfjob-port
-            image: chiefmate/cv-gpu:0.0.2-network
+            image: potato4332/cv-gpu:0.0.2-network
             imagePullPolicy: IfNotPresent
             resources:
               requests:
@@ -70,7 +70,7 @@ spec:
           annotations:
             "tensorspot/num_controller": "1"
             "tensorspot/num_worker": "4"
-            "tensorspot/net_request": "0"
+            "tensorspot/net_request": "1178"
             "tensorspot/placement_policy": "spot"
         spec:
           containers:
@@ -88,7 +88,7 @@ spec:
             ports:
             - containerPort: 2222
               name: tfjob-port
-            image: chiefmate/cv-cpu:0.0.1-network
+            image: potato4332/cv-cpu:0.0.1-network
             imagePullPolicy: IfNotPresent
             resources:
               requests:

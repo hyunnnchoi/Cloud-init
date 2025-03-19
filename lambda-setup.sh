@@ -325,14 +325,9 @@ setup_worker_node() {
     mkdir -p $USER_HOME/.kube
 
     # tethys-v는 이미 공유 스토리지로 마운트되어 있다고 가정
-    if [ -f $USER_HOME/tethys-v/config ]; then
-        cp $USER_HOME/tethys-v/config $USER_HOME/.kube/config
-        chown $(id -u):$(id -g) $USER_HOME/.kube/config
-        echo "공유 스토리지에서 kubeconfig를 성공적으로 복사했습니다."
-    else
-        echo "오류: 공유 스토리지에서 kubeconfig를 찾을 수 없습니다!"
-        echo "마스터 노드에서 config 파일이 ~/tethys-v/config에 복사되었는지 확인하세요."
-    fi
+    mkdir -p $HOME/.kube
+    cp ~/tethys-v/config ~/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
     # Join 명령어 안내
     echo -e "\n마스터 노드에서 출력된 join 명령어를 실행하세요."

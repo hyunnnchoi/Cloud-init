@@ -5,7 +5,8 @@ echo "[https://cloud.lambdalabs.com/instances]"
 echo ""
 echo "💡 Dockerhub 이미지 버전 최종 정리 (2025.03.14)"
 echo "   NLP: potato4332/nlp-image:0.0.1"
-echo "   CV: chiefmate/"
+echo "   CV: potato4332/cv-cpu:0.0.1"
+echo "   CV: potato4332/cv-gpu:0.0.2"
 echo ""
 
 # 스크립트를 관리자 권한으로 실행하는지 확인

@@ -9,7 +9,6 @@ SAVEPATH="/home/tensorspot/tfjob"
 sudo rm -rf ${SAVEPATH}/*
 echo "$STARTTIME" > ${SAVEPATH}/start_makespan.txt
 # GCP
-
 # 노드에 작업이 스케줄링될 때까지 대기하는 함수
 wait_for_pod_scheduling() {
     JOB_NAME=$1

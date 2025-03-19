@@ -13,7 +13,7 @@ spec:
           annotations:
             "tensorspot/num_controller": "1"
             "tensorspot/num_worker": "2"
-            "tensorspot/net_request": "391"
+            "tensorspot/net_request": "1415"
             "tensorspot/gpu_limit": "1.0"
             "tensorspot/gpu_request": "1.0"
             "tensorspot/gpu_mem": "85899345920"
@@ -70,7 +70,7 @@ spec:
           annotations:
             "tensorspot/num_controller": "1"
             "tensorspot/num_worker": "2"
-            "tensorspot/net_request": "391"
+            "tensorspot/net_request": "1415"
             "tensorspot/placement_policy": "spot"
         spec:
           containers:

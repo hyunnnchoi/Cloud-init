@@ -418,8 +418,8 @@ setup_pv_pvc() {
 
 pull_docker_images() { # 양 쪽 노드 모두에서 실행
     echo "====================> Docker 이미지 다운로드 중..."
-    docker pull chiefmate/cv-cpu:0.0.1-network
-    docker pull chiefmate/cv-gpu:0.0.2-network
+    docker pull potato4332/cv-cpu:0.0.1-network
+    docker pull potato4332/cv-gpu:0.0.2-network
     docker pull potato4332/nlp-keras:0.0.1x
 
     echo "Docker 이미지 다운로드 완료"

@@ -60,16 +60,16 @@ wait_for_resources_or_arrival() {
     echo "Checking resources for job ${JOB_NAME} (arrival time: ${ARRIVAL_TIME}s)"
 
     while true; do
-        # 자원 가용성 확인
-        WORKERNUM=$(kubectl get pod -o wide | grep -e "worker-" -e "chief-" | wc -l)
-        PENDING_PODS=$(kubectl get pods | grep -e "Pending" | wc -l)
-        TOTAL_RESOURCES_USED=$((WORKERNUM + PENDING_PODS))
-
+        RUNNING_GPU_PODS=$(kubectl get pod -o wide | grep Running | grep -e "worker-" -e "chief-" | wc -l)
+        
+        # 현재 가용 GPU 계산
+        AVAILABLE_GPUS=$((16 - RUNNING_GPU_PODS))
+        
         # 디버그 정보 출력
-        echo "DEBUG: Available GPUs=$((16 - TOTAL_RESOURCES_USED)), Required GPUs=${WORKER_NUM}"
-
+        echo "DEBUG: Available GPUs=${AVAILABLE_GPUS}, Required GPUs=${WORKER_NUM}"
+        
         # 자원이 충분한 경우 즉시 작업 시작
-        if [ $TOTAL_RESOURCES_USED -le $((16 - WORKER_NUM)) ]; then
+        if [ $AVAILABLE_GPUS -ge $WORKER_NUM ]; then
             echo "Resources available for job ${JOB_NAME}. Starting immediately."
             return 0
         fi

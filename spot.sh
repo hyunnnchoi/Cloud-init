@@ -58,6 +58,7 @@ wait_for_resources_or_arrival() {
     WORKER_NUM=$3
 
     echo "Checking resources for job ${JOB_NAME} (arrival time: ${ARRIVAL_TIME}s)"
+    DEBUG_COUNTER=0
 
     while true; do
         RUNNING_GPU_PODS=$(kubectl get pod -o wide | grep Running | grep -e "worker-" -e "chief-" | wc -l)
@@ -66,7 +67,11 @@ wait_for_resources_or_arrival() {
         AVAILABLE_GPUS=$((16 - RUNNING_GPU_PODS))
         
         # 디버그 정보 출력
-        echo "DEBUG: Available GPUs=${AVAILABLE_GPUS}, Required GPUs=${WORKER_NUM}"
+        DEBUG_COUNTER=$((DEBUG_COUNTER + 1))
+        if [ $DEBUG_COUNTER -ge 100 ]; then
+            echo "DEBUG: Available GPUs=${AVAILABLE_GPUS}, Required GPUs=${WORKER_NUM}"
+            DEBUG_COUNTER=0
+        fi
         
         # 자원이 충분한 경우 즉시 작업 시작
         if [ $AVAILABLE_GPUS -ge $WORKER_NUM ]; then
@@ -119,14 +124,14 @@ wait_for_resources_or_arrival() {
         fi
 
         # 남은 시간 계산 및 표시
-        TIME_REMAINING=$((ARRIVAL_TIME - TIME_PASSED))
-        if [ $TIME_REMAINING -gt 0 ]; then
-            echo "Waiting for resources or arrival time for job ${JOB_NAME} (Remaining: ${TIME_REMAINING}s)"
-        else
-            echo "Arrival time already passed, waiting for resources to become available"
+        if [ $DEBUG_COUNTER -eq 50 ]; then
+            TIME_REMAINING=$((ARRIVAL_TIME - TIME_PASSED))
+            if [ $TIME_REMAINING -gt 0 ]; then
+                echo "Waiting for resources or arrival time for job ${JOB_NAME} (Remaining: ${TIME_REMAINING}s)"
+            else
+                echo "Arrival time already passed, waiting for resources to become available"
+            fi
         fi
-
-        sleep 0.1s
     done
 }
 

@@ -1,7 +1,7 @@
 apiVersion: kubeflow.org/v1
 kind: "TFJob"
 metadata:
-  name: id0-squad-gpt2l-sync-batch8
+  name: id12-squad-gpt2l-sync-batch16
 spec:
   runPolicy:
     cleanPodPolicy: None
@@ -12,8 +12,8 @@ spec:
         metadata:
           annotations:
             "tensorspot/num_chief": "1"
-            "tensorspot/num_worker": "2"
-            "tensorspot/net_request": "5909"
+            "tensorspot/num_worker": "4"
+            "tensorspot/net_request": "5917"
             "tensorspot/gpu_limit": "1.0"
             "tensorspot/gpu_request": "1.0"
             "tensorspot/gpu_mem": "85899345920"
@@ -27,11 +27,11 @@ spec:
               value: "/data"
             args:
               - JOB=`python /workspace/job_name.py`;
-                mkdir -p /result/id0_squad_gpt2l_sync_batch8;
-                echo "id0_squad_gpt2l_sync_batch8" > /workspace/model.txt;
-                STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/id0_squad_gpt2l_sync_batch8/id0_squad_gpt2l_sync_batch8_${JOB}_start_time.txt;
-                top -d 0.1 -b | grep python > /result/id0_squad_gpt2l_sync_batch8/id0_squad_gpt2l_sync_batch8_${JOB}_cpu.txt & python /workspace/nlp_jobs/gpt2l_dist_squad.py --batch_size 4 --num_batches 5192;
-                ENDTIME=`date "+%H:%M:%S.%N"`; echo "$ENDTIME" > /result/id0_squad_gpt2l_sync_batch8/id0_squad_gpt2l_sync_batch8_${JOB}_end_time.txt
+                mkdir -p /result/id12_squad_gpt2l_sync_batch16;
+                echo "id12_squad_gpt2l_sync_batch16" > /workspace/model.txt;
+                STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/id12_squad_gpt2l_sync_batch16/id12_squad_gpt2l_sync_batch16_${JOB}_start_time.txt;
+                top -d 0.1 -b | grep python > /result/id12_squad_gpt2l_sync_batch16/id12_squad_gpt2l_sync_batch16_${JOB}_cpu.txt & python /workspace/nlp_jobs/gpt2l_dist_squad.py --batch_size 4 --num_batches 253;
+                ENDTIME=`date "+%H:%M:%S.%N"`; echo "$ENDTIME" > /result/id12_squad_gpt2l_sync_batch16/id12_squad_gpt2l_sync_batch16_${JOB}_end_time.txt
             ports:
               - containerPort: 2222
                 name: tfjob-port
@@ -66,13 +66,13 @@ spec:
             twonode: worker
           schedulerName: tensorspot-scheduler
     WORKER:
-      replicas: 1
+      replicas: 3
       template:
         metadata:
           annotations:
             "tensorspot/num_chief": "1"
-            "tensorspot/num_worker": "2"
-            "tensorspot/net_request": "5909"
+            "tensorspot/num_worker": "4"
+            "tensorspot/net_request": "5917"
             "tensorspot/gpu_limit": "1.0"
             "tensorspot/gpu_request": "1.0"
             "tensorspot/gpu_mem": "85899345920"
@@ -86,11 +86,11 @@ spec:
               value: "/data"
             args:
               - JOB=`python /workspace/job_name.py`;
-                mkdir -p /result/id0_squad_gpt2l_sync_batch8;
-                echo "id0_squad_gpt2l_sync_batch8" > /workspace/model.txt;
-                STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/id0_squad_gpt2l_sync_batch8/id0_squad_gpt2l_sync_batch8_${JOB}_start_time.txt;
-                top -d 0.1 -b | grep python > /result/id0_squad_gpt2l_sync_batch8/id0_squad_gpt2l_sync_batch8_${JOB}_cpu.txt & python /workspace/nlp_jobs/gpt2l_dist_squad.py --batch_size 4 --num_batches 5192;
-                ENDTIME=`date "+%H:%M:%S.%N"`; echo "$ENDTIME" > /result/id0_squad_gpt2l_sync_batch8/id0_squad_gpt2l_sync_batch8_${JOB}_end_time.txt
+                mkdir -p /result/id12_squad_gpt2l_sync_batch16;
+                echo "id12_squad_gpt2l_sync_batch16" > /workspace/model.txt;
+                STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/id12_squad_gpt2l_sync_batch16/id12_squad_gpt2l_sync_batch16_${JOB}_start_time.txt;
+                top -d 0.1 -b | grep python > /result/id12_squad_gpt2l_sync_batch16/id12_squad_gpt2l_sync_batch16_${JOB}_cpu.txt & python /workspace/nlp_jobs/gpt2l_dist_squad.py --batch_size 4 --num_batches 253;
+                ENDTIME=`date "+%H:%M:%S.%N"`; echo "$ENDTIME" > /result/id12_squad_gpt2l_sync_batch16/id12_squad_gpt2l_sync_batch16_${JOB}_end_time.txt
             ports:
               - containerPort: 2222
                 name: tfjob-port

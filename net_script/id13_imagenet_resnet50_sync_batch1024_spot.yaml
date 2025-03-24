@@ -1,7 +1,7 @@
 apiVersion: kubeflow.org/v1
 kind: "TFJob"
 metadata:
-  name: id1-cifar10-resnet110-sync-batch8192
+  name: id13-imagenet-resnet50-sync-batch1024
 spec:
   runPolicy:
     cleanPodPolicy: None
@@ -13,7 +13,7 @@ spec:
           annotations:
             "tensorspot/num_controller": "1"
             "tensorspot/num_worker": "8"
-            "tensorspot/net_request": "405"
+            "tensorspot/net_request": "7267"
             "tensorspot/gpu_limit": "1.0"
             "tensorspot/gpu_request": "1.0"
             "tensorspot/gpu_mem": "85899345920"
@@ -27,14 +27,14 @@ spec:
                 make;
                 JOB=`python /tf_cnn_benchmarks/job_name.py`;
                 CONTROLLER_HOST=`python -c "import os, json; tf_config = json.loads(os.environ.get('TF_CONFIG') or '{}'); cluster_config = tf_config.get('cluster', {}); controller_host = cluster_config.get('controller'); print(','.join(controller_host))"`;
-                mkdir -p /result/id1_cifar10_resnet110_sync_batch8192;
-                top -d 0.1 -b | grep tf_cnn > /result/id1_cifar10_resnet110_sync_batch8192/id1_cifar10_resnet110_sync_batch8192_${JOB}_cpu.txt &
-                echo "id1_cifar10_resnet110_sync_batch8192" > /tf_cnn_benchmarks/model.txt;
+                mkdir -p /result/id13_imagenet_resnet50_sync_batch1024;
+                top -d 0.1 -b | grep tf_cnn > /result/id13_imagenet_resnet50_sync_batch1024/id13_imagenet_resnet50_sync_batch1024_${JOB}_cpu.txt &
+                echo "id13_imagenet_resnet50_sync_batch1024" > /tf_cnn_benchmarks/model.txt;
                 STARTTIME=`date "+%H:%M:%S.%N"`;
-                echo "$STARTTIME" > /result/id1_cifar10_resnet110_sync_batch8192/id1_cifar10_resnet110_sync_batch8192_${JOB}_start_time.txt;
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet110 --data_name=cifar10 --display_every=1 --batch_size=1024 --cross_replica_sync=true --num_batches=11945 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id1_cifar10_resnet110_sync_batch8192/id1_cifar10_resnet110_sync_batch8192_${JOB}_log.txt;
+                echo "$STARTTIME" > /result/id13_imagenet_resnet50_sync_batch1024/id13_imagenet_resnet50_sync_batch1024_${JOB}_start_time.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet50 --data_name=imagenet --display_every=1 --batch_size=128 --cross_replica_sync=true --num_batches=5385 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id13_imagenet_resnet50_sync_batch1024/id13_imagenet_resnet50_sync_batch1024_${JOB}_log.txt;
                 ENDTIME=`date "+%H:%M:%S.%N"`;
-                echo "$ENDTIME" > /result/id1_cifar10_resnet110_sync_batch8192/id1_cifar10_resnet110_sync_batch8192_${JOB}_end_time.txt
+                echo "$ENDTIME" > /result/id13_imagenet_resnet50_sync_batch1024/id13_imagenet_resnet50_sync_batch1024_${JOB}_end_time.txt
             ports:
             - containerPort: 2222
               name: tfjob-port
@@ -70,7 +70,7 @@ spec:
           annotations:
             "tensorspot/num_controller": "1"
             "tensorspot/num_worker": "8"
-            "tensorspot/net_request": "405"
+            "tensorspot/net_request": "7267"
             "tensorspot/placement_policy": "spot"
         spec:
           containers:
@@ -79,12 +79,12 @@ spec:
             args:
               - JOB=`python /tf_cnn_benchmarks/job_name.py`;
                 CONTROLLER_HOST=`python -c "import os, json; tf_config = json.loads(os.environ.get('TF_CONFIG') or '{}'); cluster_config = tf_config.get('cluster', {}); controller_host = cluster_config.get('controller'); print(','.join(controller_host))"`;
-                mkdir -p /result/id1_cifar10_resnet110_sync_batch8192;
-                echo "id1_cifar10_resnet110_sync_batch8192" > /tf_cnn_benchmarks/model.txt;
-                top -d 0.1 -b | grep tf_cnn > /result/id1_cifar10_resnet110_sync_batch8192/id1_cifar10_resnet110_sync_batch8192_${JOB}_cpu.txt &
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet110 --data_name=cifar10 --display_every=1 --batch_size=1024 --cross_replica_sync=true --num_batches=11945 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id1_cifar10_resnet110_sync_batch8192/id1_cifar10_resnet110_sync_batch8192_${JOB}_log.txt;
+                mkdir -p /result/id13_imagenet_resnet50_sync_batch1024;
+                echo "id13_imagenet_resnet50_sync_batch1024" > /tf_cnn_benchmarks/model.txt;
+                top -d 0.1 -b | grep tf_cnn > /result/id13_imagenet_resnet50_sync_batch1024/id13_imagenet_resnet50_sync_batch1024_${JOB}_cpu.txt &
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet50 --data_name=imagenet --display_every=1 --batch_size=128 --cross_replica_sync=true --num_batches=5385 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id13_imagenet_resnet50_sync_batch1024/id13_imagenet_resnet50_sync_batch1024_${JOB}_log.txt;
                 ENDTIME=`date "+%H:%M:%S.%N"`;
-                echo "$ENDTIME" > /result/id1_cifar10_resnet110_sync_batch8192/id1_cifar10_resnet110_sync_batch8192_${JOB}_end_time.txt
+                echo "$ENDTIME" > /result/id13_imagenet_resnet50_sync_batch1024/id13_imagenet_resnet50_sync_batch1024_${JOB}_end_time.txt
             ports:
             - containerPort: 2222
               name: tfjob-port

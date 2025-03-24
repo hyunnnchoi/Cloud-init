@@ -35,7 +35,7 @@ spec:
             ports:
               - containerPort: 2222
                 name: tfjob-port
-            image: potato4332/nlp-image:0.0.1
+            image: potato4332/nlp-image:0.0.1x
             imagePullPolicy: IfNotPresent
             resources:
               requests:
@@ -94,7 +94,7 @@ spec:
             ports:
               - containerPort: 2222
                 name: tfjob-port
-            image: potato4332/nlp-image:0.0.1
+            image: potato4332/nlp-image:0.0.1x
             imagePullPolicy: IfNotPresent
             resources:
               requests:

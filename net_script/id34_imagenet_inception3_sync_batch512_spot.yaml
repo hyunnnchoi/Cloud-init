@@ -38,7 +38,7 @@ spec:
             ports:
             - containerPort: 2222
               name: tfjob-port
-            image: potato4332/cv-gpu:0.0.2-network
+            image: potato4332/cv-gpu:0.0.2x
             imagePullPolicy: IfNotPresent
             resources:
               requests:
@@ -88,7 +88,7 @@ spec:
             ports:
             - containerPort: 2222
               name: tfjob-port
-            image: potato4332/cv-cpu:0.0.1-network
+            image: potato4332/cv-cpu:0.0.1x
             imagePullPolicy: IfNotPresent
             resources:
               requests:

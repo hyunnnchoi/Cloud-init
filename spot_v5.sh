@@ -1,4 +1,3 @@
-
 #!/bin/bash
 STARTTIME=`date "+%H:%M:%S.%N"`
 STARTEPOCH=`date +%s`  # 스크립트 시작 시간 (epoch 초)
@@ -149,6 +148,185 @@ echo "Submitting job: $MODEL"
 date "+%H:%M:%S.%N" > ${SAVEPATH}/${MODEL}_job_create.txt
 kubectl create -f ${TFPATH}/net_script/${MODEL}_spot.yaml
 echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${MODEL}_job_submitted.txt
+
+# 작업이 실제로 노드에 스케줄링될 때까지 대기
+wait_for_pod_scheduling "$MODEL" 8
+
+
+# 작업 23: id23_squad_gpt2l_sync_batch16 처리
+echo "Preparing job 23: id23_squad_gpt2l_sync_batch16 (Workers: 4, Arrival: 34686)"
+
+# 자원 또는 arrival_time 대기
+wait_for_resources_or_arrival 34686 "id23_squad_gpt2l_sync_batch16" 4
+
+MODEL="id23_squad_gpt2l_sync_batch16"
+sudo rm -rf ${SAVEPATH}/${MODEL}
+mkdir -p ${SAVEPATH}/${MODEL}
+echo "Submitting job: $MODEL"
+date "+%H:%M:%S.%N" > ${SAVEPATH}/${MODEL}_job_create.txt
+kubectl create -f ${TFPATH}/net_script/${MODEL}_spot.yaml
+echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${MODEL}_job_submitted.txt
+
+# 작업이 실제로 노드에 스케줄링될 때까지 대기
+wait_for_pod_scheduling "$MODEL" 4
+
+
+# 작업 24: id24_squad_gpt2l_sync_batch32 처리
+echo "Preparing job 24: id24_squad_gpt2l_sync_batch32 (Workers: 8, Arrival: 37554)"
+
+# 자원 또는 arrival_time 대기
+wait_for_resources_or_arrival 37554 "id24_squad_gpt2l_sync_batch32" 8
+
+MODEL="id24_squad_gpt2l_sync_batch32"
+sudo rm -rf ${SAVEPATH}/${MODEL}
+mkdir -p ${SAVEPATH}/${MODEL}
+echo "Submitting job: $MODEL"
+date "+%H:%M:%S.%N" > ${SAVEPATH}/${MODEL}_job_create.txt
+kubectl create -f ${TFPATH}/net_script/${MODEL}_spot.yaml
+echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${MODEL}_job_submitted.txt
+
+# 작업이 실제로 노드에 스케줄링될 때까지 대기
+wait_for_pod_scheduling "$MODEL" 8
+
+
+# 작업 25: id25_imagenet_inception3_sync_batch256 처리
+echo "Preparing job 25: id25_imagenet_inception3_sync_batch256 (Workers: 4, Arrival: 39495)"
+
+# 자원 또는 arrival_time 대기
+wait_for_resources_or_arrival 39495 "id25_imagenet_inception3_sync_batch256" 4
+
+MODEL="id25_imagenet_inception3_sync_batch256"
+sudo rm -rf ${SAVEPATH}/${MODEL}
+mkdir -p ${SAVEPATH}/${MODEL}
+echo "Submitting job: $MODEL"
+date "+%H:%M:%S.%N" > ${SAVEPATH}/${MODEL}_job_create.txt
+kubectl create -f ${TFPATH}/net_script/${MODEL}_spot.yaml
+echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${MODEL}_job_submitted.txt
+
+# 작업이 실제로 노드에 스케줄링될 때까지 대기
+wait_for_pod_scheduling "$MODEL" 4
+
+
+# 작업 26: id26_imagenet_inception3_sync_batch256 처리
+echo "Preparing job 26: id26_imagenet_inception3_sync_batch256 (Workers: 4, Arrival: 39903)"
+
+# 자원 또는 arrival_time 대기
+wait_for_resources_or_arrival 39903 "id26_imagenet_inception3_sync_batch256" 4
+
+MODEL="id26_imagenet_inception3_sync_batch256"
+sudo rm -rf ${SAVEPATH}/${MODEL}
+mkdir -p ${SAVEPATH}/${MODEL}
+echo "Submitting job: $MODEL"
+date "+%H:%M:%S.%N" > ${SAVEPATH}/${MODEL}_job_create.txt
+kubectl create -f ${TFPATH}/net_script/${MODEL}_spot.yaml
+echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${MODEL}_job_submitted.txt
+
+# 작업이 실제로 노드에 스케줄링될 때까지 대기
+wait_for_pod_scheduling "$MODEL" 4
+
+
+# 작업 27: id27_squad_gpt2_sync_batch32 처리
+echo "Preparing job 27: id27_squad_gpt2_sync_batch32 (Workers: 8, Arrival: 40352)"
+
+# 자원 또는 arrival_time 대기
+wait_for_resources_or_arrival 40352 "id27_squad_gpt2_sync_batch32" 8
+
+MODEL="id27_squad_gpt2_sync_batch32"
+sudo rm -rf ${SAVEPATH}/${MODEL}
+mkdir -p ${SAVEPATH}/${MODEL}
+echo "Submitting job: $MODEL"
+date "+%H:%M:%S.%N" > ${SAVEPATH}/${MODEL}_job_create.txt
+kubectl create -f ${TFPATH}/net_script/${MODEL}_spot.yaml
+echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${MODEL}_job_submitted.txt
+
+# 작업이 실제로 노드에 스케줄링될 때까지 대기
+wait_for_pod_scheduling "$MODEL" 8
+
+
+# 작업 28: id28_squad_bertl_sync_batch16 처리
+echo "Preparing job 28: id28_squad_bertl_sync_batch16 (Workers: 4, Arrival: 40415)"
+
+# 자원 또는 arrival_time 대기
+wait_for_resources_or_arrival 40415 "id28_squad_bertl_sync_batch16" 4
+
+MODEL="id28_squad_bertl_sync_batch16"
+sudo rm -rf ${SAVEPATH}/${MODEL}
+mkdir -p ${SAVEPATH}/${MODEL}
+echo "Submitting job: $MODEL"
+date "+%H:%M:%S.%N" > ${SAVEPATH}/${MODEL}_job_create.txt
+kubectl create -f ${TFPATH}/net_script/${MODEL}_spot.yaml
+echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${MODEL}_job_submitted.txt
+
+# 작업이 실제로 노드에 스케줄링될 때까지 대기
+wait_for_pod_scheduling "$MODEL" 4
+
+
+# 작업 29: id29_cifar10_resnet110_sync_batch8192 처리
+echo "Preparing job 29: id29_cifar10_resnet110_sync_batch8192 (Workers: 8, Arrival: 42297)"
+
+# 자원 또는 arrival_time 대기
+wait_for_resources_or_arrival 42297 "id29_cifar10_resnet110_sync_batch8192" 8
+
+MODEL="id29_cifar10_resnet110_sync_batch8192"
+sudo rm -rf ${SAVEPATH}/${MODEL}
+mkdir -p ${SAVEPATH}/${MODEL}
+echo "Submitting job: $MODEL"
+date "+%H:%M:%S.%N" > ${SAVEPATH}/${MODEL}_job_create.txt
+kubectl create -f ${TFPATH}/net_script/${MODEL}_spot.yaml
+echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${MODEL}_job_submitted.txt
+
+# 작업이 실제로 노드에 스케줄링될 때까지 대기
+wait_for_pod_scheduling "$MODEL" 8
+
+
+# 모든 작업이 완료될 때까지 대기
+RUNNING=`kubectl get pod -o wide | awk '{print $1}' | sed -n '1p'`
+while [ -n "${RUNNING}" ]
+do
+  # Controller/Chief가 Completed 상태인 경우 작업 완료로 간주
+  COMPLETED_CONTROLLERS=`kubectl get pod -o wide | grep -e "controller-" -e "chief-" | grep Completed | awk '{print $1}'`
+
+  if [ -n "${COMPLETED_CONTROLLERS}" ]; then
+    for completed_pod in ${COMPLETED_CONTROLLERS}; do
+      # 작업 이름 추출 (예: id1_cifar10_alexnet_sync_batch32768)
+      COMPLETED_JOB=`echo ${completed_pod} | awk -F '-' '{
+        jobname = $1
+        for (i = 2; i <= NF - 2; i++) {
+          jobname = jobname "_" $i
+        }
+        print jobname
+      }'`
+
+      # 작업 포드 이름 추출 (예: id1-cifar10-alexnet-sync-batch32768)
+      COMPLETED_JOB_POD=`echo ${completed_pod} | awk -F '-' '{
+        jobname = $1
+        for (i = 2; i <= NF - 2; i++) {
+          jobname = jobname "-" $i
+        }
+        print jobname
+      }'`
+
+      echo "Job ${COMPLETED_JOB} completed (controller/chief is in Completed state)"
+
+      # 노드 정보 저장
+      kubectl get pod -o wide | grep ${COMPLETED_JOB_POD} | awk '{print $1 "\t" $7}' > ${SAVEPATH}/${COMPLETED_JOB}_node_info.txt
+      echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${COMPLETED_JOB}_job_finished.txt
+
+      # 작업 삭제
+      kubectl delete -f ${TFPATH}/net_script/${COMPLETED_JOB}_spot.yaml
+    done
+  fi
+
+  sleep 0.1s;
+  RUNNING=`kubectl get pod -o wide | awk '{print $1}' | sed -n '1p'`
+done
+
+ENDTIME=`date "+%H:%M:%S.%N"`
+echo "$ENDTIME" > ${SAVEPATH}/end_makespan.txt
+ENDLOGTIME=$(($(date +%s%N)/1000000000))
+LOGTIME=$(($ENDLOGTIME - $STARTLOGTIME))
+kubectl logs -n kube-system kube-scheduler-xsailor-master  > ${SAVEPATH}/scheduler_full_log.txt
+kubectl logs -n kube-system tensorspot-scheduler > ${SAVEPATH}/scheduler_log.txt_job_submitted.txt
 
 # 첫 번째 작업이 실제로 노드에 스케줄링될 때까지 대기
 wait_for_pod_scheduling "$MODEL" $WORKER_NUM
@@ -544,183 +722,4 @@ mkdir -p ${SAVEPATH}/${MODEL}
 echo "Submitting job: $MODEL"
 date "+%H:%M:%S.%N" > ${SAVEPATH}/${MODEL}_job_create.txt
 kubectl create -f ${TFPATH}/net_script/${MODEL}_spot.yaml
-echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${MODEL}_job_submitted.txt
-
-# 작업이 실제로 노드에 스케줄링될 때까지 대기
-wait_for_pod_scheduling "$MODEL" 8
-
-
-# 작업 23: id23_squad_gpt2l_sync_batch16 처리
-echo "Preparing job 23: id23_squad_gpt2l_sync_batch16 (Workers: 4, Arrival: 34686)"
-
-# 자원 또는 arrival_time 대기
-wait_for_resources_or_arrival 34686 "id23_squad_gpt2l_sync_batch16" 4
-
-MODEL="id23_squad_gpt2l_sync_batch16"
-sudo rm -rf ${SAVEPATH}/${MODEL}
-mkdir -p ${SAVEPATH}/${MODEL}
-echo "Submitting job: $MODEL"
-date "+%H:%M:%S.%N" > ${SAVEPATH}/${MODEL}_job_create.txt
-kubectl create -f ${TFPATH}/net_script/${MODEL}_spot.yaml
-echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${MODEL}_job_submitted.txt
-
-# 작업이 실제로 노드에 스케줄링될 때까지 대기
-wait_for_pod_scheduling "$MODEL" 4
-
-
-# 작업 24: id24_squad_gpt2l_sync_batch32 처리
-echo "Preparing job 24: id24_squad_gpt2l_sync_batch32 (Workers: 8, Arrival: 37554)"
-
-# 자원 또는 arrival_time 대기
-wait_for_resources_or_arrival 37554 "id24_squad_gpt2l_sync_batch32" 8
-
-MODEL="id24_squad_gpt2l_sync_batch32"
-sudo rm -rf ${SAVEPATH}/${MODEL}
-mkdir -p ${SAVEPATH}/${MODEL}
-echo "Submitting job: $MODEL"
-date "+%H:%M:%S.%N" > ${SAVEPATH}/${MODEL}_job_create.txt
-kubectl create -f ${TFPATH}/net_script/${MODEL}_spot.yaml
-echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${MODEL}_job_submitted.txt
-
-# 작업이 실제로 노드에 스케줄링될 때까지 대기
-wait_for_pod_scheduling "$MODEL" 8
-
-
-# 작업 25: id25_imagenet_inception3_sync_batch256 처리
-echo "Preparing job 25: id25_imagenet_inception3_sync_batch256 (Workers: 4, Arrival: 39495)"
-
-# 자원 또는 arrival_time 대기
-wait_for_resources_or_arrival 39495 "id25_imagenet_inception3_sync_batch256" 4
-
-MODEL="id25_imagenet_inception3_sync_batch256"
-sudo rm -rf ${SAVEPATH}/${MODEL}
-mkdir -p ${SAVEPATH}/${MODEL}
-echo "Submitting job: $MODEL"
-date "+%H:%M:%S.%N" > ${SAVEPATH}/${MODEL}_job_create.txt
-kubectl create -f ${TFPATH}/net_script/${MODEL}_spot.yaml
-echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${MODEL}_job_submitted.txt
-
-# 작업이 실제로 노드에 스케줄링될 때까지 대기
-wait_for_pod_scheduling "$MODEL" 4
-
-
-# 작업 26: id26_imagenet_inception3_sync_batch256 처리
-echo "Preparing job 26: id26_imagenet_inception3_sync_batch256 (Workers: 4, Arrival: 39903)"
-
-# 자원 또는 arrival_time 대기
-wait_for_resources_or_arrival 39903 "id26_imagenet_inception3_sync_batch256" 4
-
-MODEL="id26_imagenet_inception3_sync_batch256"
-sudo rm -rf ${SAVEPATH}/${MODEL}
-mkdir -p ${SAVEPATH}/${MODEL}
-echo "Submitting job: $MODEL"
-date "+%H:%M:%S.%N" > ${SAVEPATH}/${MODEL}_job_create.txt
-kubectl create -f ${TFPATH}/net_script/${MODEL}_spot.yaml
-echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${MODEL}_job_submitted.txt
-
-# 작업이 실제로 노드에 스케줄링될 때까지 대기
-wait_for_pod_scheduling "$MODEL" 4
-
-
-# 작업 27: id27_squad_gpt2_sync_batch32 처리
-echo "Preparing job 27: id27_squad_gpt2_sync_batch32 (Workers: 8, Arrival: 40352)"
-
-# 자원 또는 arrival_time 대기
-wait_for_resources_or_arrival 40352 "id27_squad_gpt2_sync_batch32" 8
-
-MODEL="id27_squad_gpt2_sync_batch32"
-sudo rm -rf ${SAVEPATH}/${MODEL}
-mkdir -p ${SAVEPATH}/${MODEL}
-echo "Submitting job: $MODEL"
-date "+%H:%M:%S.%N" > ${SAVEPATH}/${MODEL}_job_create.txt
-kubectl create -f ${TFPATH}/net_script/${MODEL}_spot.yaml
-echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${MODEL}_job_submitted.txt
-
-# 작업이 실제로 노드에 스케줄링될 때까지 대기
-wait_for_pod_scheduling "$MODEL" 8
-
-
-# 작업 28: id28_squad_bertl_sync_batch16 처리
-echo "Preparing job 28: id28_squad_bertl_sync_batch16 (Workers: 4, Arrival: 40415)"
-
-# 자원 또는 arrival_time 대기
-wait_for_resources_or_arrival 40415 "id28_squad_bertl_sync_batch16" 4
-
-MODEL="id28_squad_bertl_sync_batch16"
-sudo rm -rf ${SAVEPATH}/${MODEL}
-mkdir -p ${SAVEPATH}/${MODEL}
-echo "Submitting job: $MODEL"
-date "+%H:%M:%S.%N" > ${SAVEPATH}/${MODEL}_job_create.txt
-kubectl create -f ${TFPATH}/net_script/${MODEL}_spot.yaml
-echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${MODEL}_job_submitted.txt
-
-# 작업이 실제로 노드에 스케줄링될 때까지 대기
-wait_for_pod_scheduling "$MODEL" 4
-
-
-# 작업 29: id29_cifar10_resnet110_sync_batch8192 처리
-echo "Preparing job 29: id29_cifar10_resnet110_sync_batch8192 (Workers: 8, Arrival: 42297)"
-
-# 자원 또는 arrival_time 대기
-wait_for_resources_or_arrival 42297 "id29_cifar10_resnet110_sync_batch8192" 8
-
-MODEL="id29_cifar10_resnet110_sync_batch8192"
-sudo rm -rf ${SAVEPATH}/${MODEL}
-mkdir -p ${SAVEPATH}/${MODEL}
-echo "Submitting job: $MODEL"
-date "+%H:%M:%S.%N" > ${SAVEPATH}/${MODEL}_job_create.txt
-kubectl create -f ${TFPATH}/net_script/${MODEL}_spot.yaml
-echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${MODEL}_job_submitted.txt
-
-# 작업이 실제로 노드에 스케줄링될 때까지 대기
-wait_for_pod_scheduling "$MODEL" 8
-
-
-# 모든 작업이 완료될 때까지 대기
-RUNNING=`kubectl get pod -o wide | awk '{print $1}' | sed -n '1p'`
-while [ -n "${RUNNING}" ]
-do
-  # Controller/Chief가 Completed 상태인 경우 작업 완료로 간주
-  COMPLETED_CONTROLLERS=`kubectl get pod -o wide | grep -e "controller-" -e "chief-" | grep Completed | awk '{print $1}'`
-
-  if [ -n "${COMPLETED_CONTROLLERS}" ]; then
-    for completed_pod in ${COMPLETED_CONTROLLERS}; do
-      # 작업 이름 추출 (예: id1_cifar10_alexnet_sync_batch32768)
-      COMPLETED_JOB=`echo ${completed_pod} | awk -F '-' '{
-        jobname = $1
-        for (i = 2; i <= NF - 2; i++) {
-          jobname = jobname "_" $i
-        }
-        print jobname
-      }'`
-
-      # 작업 포드 이름 추출 (예: id1-cifar10-alexnet-sync-batch32768)
-      COMPLETED_JOB_POD=`echo ${completed_pod} | awk -F '-' '{
-        jobname = $1
-        for (i = 2; i <= NF - 2; i++) {
-          jobname = jobname "-" $i
-        }
-        print jobname
-      }'`
-
-      echo "Job ${COMPLETED_JOB} completed (controller/chief is in Completed state)"
-
-      # 노드 정보 저장
-      kubectl get pod -o wide | grep ${COMPLETED_JOB_POD} | awk '{print $1 "\t" $7}' > ${SAVEPATH}/${COMPLETED_JOB}_node_info.txt
-      echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${COMPLETED_JOB}_job_finished.txt
-
-      # 작업 삭제
-      kubectl delete -f ${TFPATH}/net_script/${COMPLETED_JOB}_spot.yaml
-    done
-  fi
-
-  sleep 0.1s;
-  RUNNING=`kubectl get pod -o wide | awk '{print $1}' | sed -n '1p'`
-done
-
-ENDTIME=`date "+%H:%M:%S.%N"`
-echo "$ENDTIME" > ${SAVEPATH}/end_makespan.txt
-ENDLOGTIME=$(($(date +%s%N)/1000000000))
-LOGTIME=$(($ENDLOGTIME - $STARTLOGTIME))
-kubectl logs -n kube-system kube-scheduler-xsailor-master  > ${SAVEPATH}/scheduler_full_log.txt
-kubectl logs -n kube-system tensorspot-scheduler > ${SAVEPATH}/scheduler_log.txt
+echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${MODEL

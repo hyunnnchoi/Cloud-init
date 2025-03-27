@@ -188,7 +188,7 @@ install_kubernetes() {
     mkdir -m 777 data
     mkdir -m 777 tfjob
 
-    git clone https://github.com/hyunnnchoi/Cloud-init.git
+    git clone -b k8s https://github.com/hyunnnchoi/Cloud-init.git
 
     cd Cloud-init
 

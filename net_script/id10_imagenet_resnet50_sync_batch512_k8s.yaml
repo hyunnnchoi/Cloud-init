@@ -1,7 +1,7 @@
 apiVersion: kubeflow.org/v1
 kind: "TFJob"
 metadata:
-  name: id14-imagenet-inception3-sync-batch256
+  name: id10-imagenet-resnet50-sync-batch512
 spec:
   runPolicy:
     cleanPodPolicy: None
@@ -9,15 +9,6 @@ spec:
     WORKER:
       replicas: 4
       template:
-        metadata:
-          annotations:
-            "tensorspot/num_controller": "1"
-            "tensorspot/num_worker": "4"
-            "tensorspot/net_request": "4390"
-            "tensorspot/gpu_limit": "1.0"
-            "tensorspot/gpu_request": "1.0"
-            "tensorspot/gpu_mem": "85899345920"
-            "tensorspot/placement_policy": "spot"
         spec:
           containers:
           - name: tensorflow
@@ -27,14 +18,14 @@ spec:
                 make;
                 JOB=`python /tf_cnn_benchmarks/job_name.py`;
                 CONTROLLER_HOST=`python -c "import os, json; tf_config = json.loads(os.environ.get('TF_CONFIG') or '{}'); cluster_config = tf_config.get('cluster', {}); controller_host = cluster_config.get('controller'); print(','.join(controller_host))"`;
-                mkdir -p /result/id14_imagenet_inception3_sync_batch256;
-                top -d 0.1 -b | grep tf_cnn > /result/id14_imagenet_inception3_sync_batch256/id14_imagenet_inception3_sync_batch256_${JOB}_cpu.txt &
-                echo "id14_imagenet_inception3_sync_batch256" > /tf_cnn_benchmarks/model.txt;
+                mkdir -p /result/id10_imagenet_resnet50_sync_batch512;
+                top -d 0.1 -b | grep tf_cnn > /result/id10_imagenet_resnet50_sync_batch512/id10_imagenet_resnet50_sync_batch512_${JOB}_cpu.txt &
+                echo "id10_imagenet_resnet50_sync_batch512" > /tf_cnn_benchmarks/model.txt;
                 STARTTIME=`date "+%H:%M:%S.%N"`;
-                echo "$STARTTIME" > /result/id14_imagenet_inception3_sync_batch256/id14_imagenet_inception3_sync_batch256_${JOB}_start_time.txt;
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=inception3 --data_name=imagenet --display_every=1 --batch_size=64 --cross_replica_sync=true --num_batches=215 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id14_imagenet_inception3_sync_batch256/id14_imagenet_inception3_sync_batch256_${JOB}_log.txt;
+                echo "$STARTTIME" > /result/id10_imagenet_resnet50_sync_batch512/id10_imagenet_resnet50_sync_batch512_${JOB}_start_time.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet50 --data_name=imagenet --display_every=1 --batch_size=128 --cross_replica_sync=true --num_batches=1822 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id10_imagenet_resnet50_sync_batch512/id10_imagenet_resnet50_sync_batch512_${JOB}_log.txt;
                 ENDTIME=`date "+%H:%M:%S.%N"`;
-                echo "$ENDTIME" > /result/id14_imagenet_inception3_sync_batch256/id14_imagenet_inception3_sync_batch256_${JOB}_end_time.txt
+                echo "$ENDTIME" > /result/id10_imagenet_resnet50_sync_batch512/id10_imagenet_resnet50_sync_batch512_${JOB}_end_time.txt
             ports:
             - containerPort: 2222
               name: tfjob-port
@@ -62,16 +53,9 @@ spec:
               sizeLimit: "8G"
           nodeSelector:
             twonode: worker
-          schedulerName: tensorspot-scheduler
     CONTROLLER:
       replicas: 1
       template:
-        metadata:
-          annotations:
-            "tensorspot/num_controller": "1"
-            "tensorspot/num_worker": "4"
-            "tensorspot/net_request": "4390"
-            "tensorspot/placement_policy": "spot"
         spec:
           containers:
           - name: tensorflow
@@ -79,12 +63,12 @@ spec:
             args:
               - JOB=`python /tf_cnn_benchmarks/job_name.py`;
                 CONTROLLER_HOST=`python -c "import os, json; tf_config = json.loads(os.environ.get('TF_CONFIG') or '{}'); cluster_config = tf_config.get('cluster', {}); controller_host = cluster_config.get('controller'); print(','.join(controller_host))"`;
-                mkdir -p /result/id14_imagenet_inception3_sync_batch256;
-                echo "id14_imagenet_inception3_sync_batch256" > /tf_cnn_benchmarks/model.txt;
-                top -d 0.1 -b | grep tf_cnn > /result/id14_imagenet_inception3_sync_batch256/id14_imagenet_inception3_sync_batch256_${JOB}_cpu.txt &
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=inception3 --data_name=imagenet --display_every=1 --batch_size=64 --cross_replica_sync=true --num_batches=215 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id14_imagenet_inception3_sync_batch256/id14_imagenet_inception3_sync_batch256_${JOB}_log.txt;
+                mkdir -p /result/id10_imagenet_resnet50_sync_batch512;
+                echo "id10_imagenet_resnet50_sync_batch512" > /tf_cnn_benchmarks/model.txt;
+                top -d 0.1 -b | grep tf_cnn > /result/id10_imagenet_resnet50_sync_batch512/id10_imagenet_resnet50_sync_batch512_${JOB}_cpu.txt &
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet50 --data_name=imagenet --display_every=1 --batch_size=128 --cross_replica_sync=true --num_batches=1822 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id10_imagenet_resnet50_sync_batch512/id10_imagenet_resnet50_sync_batch512_${JOB}_log.txt;
                 ENDTIME=`date "+%H:%M:%S.%N"`;
-                echo "$ENDTIME" > /result/id14_imagenet_inception3_sync_batch256/id14_imagenet_inception3_sync_batch256_${JOB}_end_time.txt
+                echo "$ENDTIME" > /result/id10_imagenet_resnet50_sync_batch512/id10_imagenet_resnet50_sync_batch512_${JOB}_end_time.txt
             ports:
             - containerPort: 2222
               name: tfjob-port
@@ -110,4 +94,3 @@ spec:
               sizeLimit: "8G"
           nodeSelector:
             twonode: worker
-          schedulerName: tensorspot-scheduler

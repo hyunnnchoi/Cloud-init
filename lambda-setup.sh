@@ -5,8 +5,8 @@ echo "[https://cloud.lambdalabs.com/instances]"
 echo ""
 echo "💡 Dockerhub 이미지 버전 최종 정리 (2025.03.14)"
 echo "   NLP: potato4332/nlp-image:0.0.1"
-echo "   CV: potato4332/cv-cpu:0.0.1"
-echo "   CV: potato4332/cv-gpu:0.0.2"
+echo "   CV: potato4332/tf2-cpu-docker:0.5.5"
+echo "   CV: potato4332/tf2-gpu-docker:0.4.5"
 echo ""
 
 # 스크립트를 관리자 권한으로 실행하는지 확인
@@ -418,8 +418,8 @@ setup_pv_pvc() {
 
 pull_docker_images() { # 양 쪽 노드 모두에서 실행
     echo "====================> Docker 이미지 다운로드 중..."
-    docker pull potato4332/cv-cpu:0.0.1-network
-    docker pull potato4332/cv-gpu:0.0.2-network
+    docker pull potato4332/tf2-cpu-docker:0.5.5
+    docker pull potato4332/tf2-gpu-docker:0.4.5
     docker pull potato4332/nlp-keras:0.0.1x
 
     echo "Docker 이미지 다운로드 완료"

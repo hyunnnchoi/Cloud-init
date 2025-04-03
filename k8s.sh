@@ -89,7 +89,7 @@ wait_for_resources_or_arrival() {
         fi
 
         # k8s 스케줄러에만 Gang 스케줄링 적용
-        if [ "$SCHEDULER" == "k8s" ]; then
+        if [ "$SCHEDULER" = "k8s" ]; then
             # Gang 스케줄링 로직: 사용 가능한 GPU 수 확인
             AVAILABLE_GPUS=$(get_available_gpus)
             echo "Current available GPUs: $AVAILABLE_GPUS (needed: $WORKER_NUM)"

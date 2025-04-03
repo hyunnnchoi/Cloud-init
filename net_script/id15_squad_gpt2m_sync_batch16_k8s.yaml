@@ -17,7 +17,8 @@ spec:
             - name: ROOT_DATA_DIR
               value: "/data"
             args:
-              - JOB=`python /workspace/job_name.py`;
+              - |
+                JOB=`python /workspace/job_name.py`;
                 mkdir -p /result/id15_squad_gpt2m_sync_batch16;
                 echo "id15_squad_gpt2m_sync_batch16" > /workspace/model.txt;
                 STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/id15_squad_gpt2m_sync_batch16/id15_squad_gpt2m_sync_batch16_${JOB}_start_time.txt;
@@ -66,7 +67,8 @@ spec:
             - name: ROOT_DATA_DIR
               value: "/data"
             args:
-              - JOB=`python /workspace/job_name.py`;
+              - |
+                JOB=`python /workspace/job_name.py`;
                 mkdir -p /result/id15_squad_gpt2m_sync_batch16;
                 echo "id15_squad_gpt2m_sync_batch16" > /workspace/model.txt;
                 STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/id15_squad_gpt2m_sync_batch16/id15_squad_gpt2m_sync_batch16_${JOB}_start_time.txt;

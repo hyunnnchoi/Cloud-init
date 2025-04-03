@@ -14,7 +14,8 @@ spec:
           - name: tensorflow
             command: ["/bin/sh", "-c"]
             args:
-              - cd /tf_cnn_benchmarks/NVML;
+              - |
+                cd /tf_cnn_benchmarks/NVML;
                 make;
                 JOB=`python /tf_cnn_benchmarks/job_name.py`;
                 CONTROLLER_HOST=`python -c "import os, json; tf_config = json.loads(os.environ.get('TF_CONFIG') or '{}'); cluster_config = tf_config.get('cluster', {}); controller_host = cluster_config.get('controller'); print(','.join(controller_host))"`;
@@ -61,7 +62,8 @@ spec:
           - name: tensorflow
             command: ["/bin/sh", "-c"]
             args:
-              - JOB=`python /tf_cnn_benchmarks/job_name.py`;
+              - |
+                JOB=`python /tf_cnn_benchmarks/job_name.py`;
                 CONTROLLER_HOST=`python -c "import os, json; tf_config = json.loads(os.environ.get('TF_CONFIG') or '{}'); cluster_config = tf_config.get('cluster', {}); controller_host = cluster_config.get('controller'); print(','.join(controller_host))"`;
                 mkdir -p /result/id13_imagenet_resnet50_sync_batch1024;
                 echo "id13_imagenet_resnet50_sync_batch1024" > /tf_cnn_benchmarks/model.txt;

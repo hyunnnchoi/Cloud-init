@@ -74,7 +74,7 @@ spec:
             ports:
             - containerPort: 2222
               name: tfjob-port
-            image: potato4332/tf2-cpu-docker:0.5.5x
+            image: potato4332/tf2-cpu-docker:0.5.5x
             imagePullPolicy: IfNotPresent
             resources:
               requests:

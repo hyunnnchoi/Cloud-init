@@ -29,7 +29,7 @@ spec:
             ports:
             - containerPort: 2222
               name: tfjob-port
-            image: potato4332/tf2-gpu-docker:0.4.5
+            image: potato4332/tf2-gpu-docker:0.4.5x
             imagePullPolicy: IfNotPresent
             resources:
               requests:
@@ -72,7 +72,7 @@ spec:
             ports:
             - containerPort: 2222
               name: tfjob-port
-            image: potato4332/tf2-cpu-docker:0.5.0
+            image: potato4332/tf2-cpu-docker:0.5.5x
             imagePullPolicy: IfNotPresent
             resources:
               requests:

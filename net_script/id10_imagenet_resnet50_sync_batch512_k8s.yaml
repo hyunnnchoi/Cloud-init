@@ -24,7 +24,7 @@ spec:
                 echo "id10_imagenet_resnet50_sync_batch512" > /tf_cnn_benchmarks/model.txt;
                 STARTTIME=`date "+%H:%M:%S.%N"`;
                 echo "$STARTTIME" > /result/id10_imagenet_resnet50_sync_batch512/id10_imagenet_resnet50_sync_batch512_${JOB}_start_time.txt;
-                nsys profile --duration=1200 -o /result/id10_imagenet_resnet50_sync_batch512/id10_imagenet_resnet50_sync_batch512_${JOB} --force-overwrite true python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet50 --data_name=imagenet --display_every=1 --batch_size=128 --cross_replica_sync=true --num_batches=10 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id10_imagenet_resnet50_sync_batch512/id10_imagenet_resnet50_sync_batch512_${JOB}_log.txt;
+                nsys profile --duration=360 -o /result/id10_imagenet_resnet50_sync_batch512/id10_imagenet_resnet50_sync_batch512_${JOB} --force-overwrite true python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet50 --data_name=imagenet --display_every=1 --batch_size=128 --cross_replica_sync=true --num_batches=10 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id10_imagenet_resnet50_sync_batch512/id10_imagenet_resnet50_sync_batch512_${JOB}_log.txt;
             ports:
             - containerPort: 2222
               name: tfjob-port

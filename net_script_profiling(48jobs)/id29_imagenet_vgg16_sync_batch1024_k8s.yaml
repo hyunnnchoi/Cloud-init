@@ -25,8 +25,6 @@ spec:
                 STARTTIME=`date "+%H:%M:%S.%N"`;
                 echo "$STARTTIME" > /result/id29_imagenet_vgg16_sync_batch1024/id29_imagenet_vgg16_sync_batch1024_${JOB}_start_time.txt;
                 nsys profile --duration=180 -o /result/id29_imagenet_vgg16_sync_batch1024/id29_imagenet_vgg16_sync_batch1024_${JOB} --force-overwrite true python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=vgg16 --data_name=imagenet --display_every=1 --batch_size=128 --cross_replica_sync=true --num_batches=10 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id29_imagenet_vgg16_sync_batch1024/id29_imagenet_vgg16_sync_batch1024_${JOB}_log.txt;
-                ENDTIME=`date "+%H:%M:%S.%N"`;
-                echo "$ENDTIME" > /result/id29_imagenet_vgg16_sync_batch1024/id29_imagenet_vgg16_sync_batch1024_${JOB}_end_time.txt
             ports:
             - containerPort: 2222
               name: tfjob-port

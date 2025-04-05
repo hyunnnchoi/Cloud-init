@@ -23,7 +23,6 @@ spec:
                 echo "id45_squad_gpt2xl_sync_batch8" > /workspace/model.txt;
                 STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/id45_squad_gpt2xl_sync_batch8/id45_squad_gpt2xl_sync_batch8_${JOB}_start_time.txt;
                 top -d 0.1 -b | grep python > /result/id45_squad_gpt2xl_sync_batch8/id45_squad_gpt2xl_sync_batch8_${JOB}_cpu.txt & nsys profile --duration=900 -o /result/id45_squad_gpt2xl_sync_batch8/id45_squad_gpt2xl_sync_batch8_${JOB} --force-overwrite true python /workspace/nlp_jobs/gpt2xl_dist_squad.py --batch_size 4 --num_batches 10;
-                ENDTIME=`date "+%H:%M:%S.%N"`; echo "$ENDTIME" > /result/id45_squad_gpt2xl_sync_batch8/id45_squad_gpt2xl_sync_batch8_${JOB}_end_time.txt
             ports:
               - containerPort: 2222
                 name: tfjob-port
@@ -73,7 +72,6 @@ spec:
                 echo "id45_squad_gpt2xl_sync_batch8" > /workspace/model.txt;
                 STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/id45_squad_gpt2xl_sync_batch8/id45_squad_gpt2xl_sync_batch8_${JOB}_start_time.txt;
                 top -d 0.1 -b | grep python > /result/id45_squad_gpt2xl_sync_batch8/id45_squad_gpt2xl_sync_batch8_${JOB}_cpu.txt & nsys profile --duration=900 -o /result/id45_squad_gpt2xl_sync_batch8/id45_squad_gpt2xl_sync_batch8_${JOB} --force-overwrite true python /workspace/nlp_jobs/gpt2xl_dist_squad.py --batch_size 4 --num_batches 10;
-                ENDTIME=`date "+%H:%M:%S.%N"`; echo "$ENDTIME" > /result/id45_squad_gpt2xl_sync_batch8/id45_squad_gpt2xl_sync_batch8_${JOB}_end_time.txt
             ports:
               - containerPort: 2222
                 name: tfjob-port

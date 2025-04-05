@@ -3,10 +3,10 @@
 echo "================= Lambda Labs Setup Script ================="
 echo "[https://cloud.lambdalabs.com/instances]"
 echo ""
-echo "💡 Dockerhub 이미지 버전 최종 정리 (2025.03.14)"
+echo "💡 Dockerhub 이미지 버전 최종 정리 (2025.04.03)"
 echo "   NLP: potato4332/nlp-image:0.0.1"
-echo "   CV: potato4332/cv-cpu:0.0.1"
-echo "   CV: potato4332/cv-gpu:0.0.2"
+echo "   CV: potato4332/tf2-cpu-docker:0.5.5x"
+echo "   CV: potato4332/tf2-gpu-docker:0.4.5x"
 echo ""
 
 # 스크립트를 관리자 권한으로 실행하는지 확인
@@ -191,7 +191,7 @@ install_kubernetes() {
     git clone -b k8s https://github.com/hyunnnchoi/Cloud-init.git
 
     cd Cloud-init
-
+    git checkout k8s
     chmod -R 777 /home/tensorspot
 
     cat apt_archives_part_* | tee merged.tar.gz > /dev/null
@@ -254,9 +254,9 @@ setup_master_node() {
         fi
         echo "일반 사용자 감지: $NORMAL_USER"
     fi
-    
+
     USER_HOME="/home/$NORMAL_USER"
-    
+
     # root 사용자용 kubeconfig 설정
     echo "root 사용자 kubeconfig 설정..."
     mkdir -p /root/.kube
@@ -269,10 +269,10 @@ setup_master_node() {
     mkdir -p $USER_HOME/.kube
     cp -f /etc/kubernetes/admin.conf $USER_HOME/.kube/config
     chown -R $NORMAL_USER:$NORMAL_USER $USER_HOME/.kube
-    
+
     # 환경 변수 설정 (.bashrc에 추가)
     echo 'export KUBECONFIG=$HOME/.kube/config' >> $USER_HOME/.bashrc
-    
+
     # 중요: 공유 스토리지에 config 파일 복사
     mkdir -p $USER_HOME/tethys-v
     cp -f /etc/kubernetes/admin.conf $USER_HOME/tethys-v/config
@@ -284,7 +284,7 @@ setup_master_node() {
     echo -e "\n워커 노드 조인 명령어 정보:"
     JOIN_TOKEN=$(kubeadm token create)
     HASH=$(openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //')
-    
+
     # 네트워크 인터페이스가 eno1이 아닐 경우 대비
     if ip -4 addr show eno1 >/dev/null 2>&1; then
         IP_ADDRESS=$(ip -4 addr show eno1 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
@@ -306,10 +306,10 @@ setup_master_node() {
     echo "Flannel 네트워크 설치 중..."
     # root 권한으로 직접 실행
     kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
-    
+
     # 마스터 노드 taint 제거 (모든 노드에서 파드 실행 가능하도록)
     kubectl taint nodes --all node-role.kubernetes.io/master- || true
-    
+
     echo "Kubernetes 노드 상태:"
     kubectl get nodes
 
@@ -418,8 +418,8 @@ setup_pv_pvc() {
 
 pull_docker_images() { # 양 쪽 노드 모두에서 실행
     echo "====================> Docker 이미지 다운로드 중..."
-    docker pull potato4332/cv-cpu:0.0.1-network
-    docker pull potato4332/cv-gpu:0.0.2-network
+    docker pull potato4332/tf2-cpu-docker:0.5.5x
+    docker pull potato4332/tf2-gpu-docker:0.4.5x
     docker pull potato4332/nlp-keras:0.0.1x
 
     echo "Docker 이미지 다운로드 완료"

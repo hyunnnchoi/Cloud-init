@@ -191,7 +191,6 @@ install_kubernetes() {
     git clone -b k8s https://github.com/hyunnnchoi/Cloud-init.git
 
     cd Cloud-init
-    git checkout k8s
     chmod -R 777 /home/tensorspot
 
     cat apt_archives_part_* | tee merged.tar.gz > /dev/null

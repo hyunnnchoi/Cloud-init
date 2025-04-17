@@ -25,6 +25,7 @@ get_available_gpus() {
 }
 
 # 노드에 작업이 스케줄링될 때까지 대기하는 함수
+# 노드에 작업이 스케줄링될 때까지 대기하는 함수 (Pending 상태가 해결될 때까지)
 wait_for_pod_scheduling() {
     JOB_NAME=$1
     WORKER_COUNT=$2
@@ -32,15 +33,18 @@ wait_for_pod_scheduling() {
 
     echo "Waiting for job $JOB_NAME to be scheduled to nodes..."
 
-    # 모든 워커/치프 포드가 노드에 할당될 때까지 대기
+    # 모든 포드가 Pending 상태를 벗어날 때까지 대기
     SCHEDULED_PODS=0
-    TIMEOUT=300  # 5분 타임아웃
+    TIMEOUT=300  # 원래 타임아웃 유지
     START_TIME=$(date +%s)
 
     while [ $SCHEDULED_PODS -lt $WORKER_COUNT ]
     do
-        # 현재 이 작업의 Running 상태이거나 ContainerCreating 상태인 포드 수 계산
+        # 현재 이 작업의 Pending이 아닌 상태(노드에 스케줄링된) 포드 수 계산
         SCHEDULED_PODS=$(kubectl get pods | grep $JOB_NAME_DASH | grep -v Pending | wc -l)
+
+        # Pending 상태 포드 수 (디버깅용)
+        PENDING_PODS=$(kubectl get pods | grep $JOB_NAME_DASH | grep Pending | wc -l)
 
         # 현재 시간 체크
         CURRENT_TIME=$(date +%s)
@@ -55,17 +59,18 @@ wait_for_pod_scheduling() {
 
         if [ $SCHEDULED_PODS -lt $WORKER_COUNT ]; then
             sleep 1
-            echo "Waiting for $JOB_NAME pods to be scheduled ($SCHEDULED_PODS/$WORKER_COUNT scheduled)"
+            echo "Waiting for $JOB_NAME pods to be scheduled ($SCHEDULED_PODS/$WORKER_COUNT scheduled, $PENDING_PODS still pending)"
         else
-            echo "All pods for $JOB_NAME have been scheduled to nodes"
+            echo "All pods for $JOB_NAME have been scheduled to nodes (no longer pending)"
             kubectl get pods -o wide | grep $JOB_NAME_DASH
+            echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${JOB_NAME}_job_finished_pending.txt
             echo "Node allocation for $JOB_NAME:" > ${SAVEPATH}/${JOB_NAME}_node_allocation.txt
             kubectl get pods -o wide | grep $JOB_NAME_DASH | awk '{print $1 "\t" $7}' >> ${SAVEPATH}/${JOB_NAME}_node_allocation.txt
             break
         fi
     done
 }
-
+# 자원과 arrival_time을 고려하여 대기하는 함수 (스케줄러에 따라 다른 로직 적용)
 # 자원과 arrival_time을 고려하여 대기하는 함수 (스케줄러에 따라 다른 로직 적용)
 wait_for_resources_or_arrival() {
     ARRIVAL_TIME=$1
@@ -75,8 +80,9 @@ wait_for_resources_or_arrival() {
 
     echo "Checking resources for job ${JOB_NAME} (arrival time: ${ARRIVAL_TIME}s, workers: $WORKER_NUM)"
 
-    # arrival time까지 대기
+    # arrival time에 도달할 때까지 대기
     while true; do
+        # arrival time 체크
         CURRENT_EPOCH=$(date +%s)
         TIME_PASSED=$((CURRENT_EPOCH - STARTEPOCH))
 
@@ -86,19 +92,13 @@ wait_for_resources_or_arrival() {
             echo "Waiting for arrival time for job ${JOB_NAME} (Remaining: ${TIME_REMAINING}s)"
             sleep 1
             continue
-        else
-            # arrival time이 지난 시점 기록
-            ARRIVAL_REACHED_TIME=$(date +%s.%N)
-            echo "Arrival time reached for job ${JOB_NAME} at $(date "+%H:%M:%S.%N")" > ${SAVEPATH}/${JOB_NAME}_arrival_reached.txt
-            break
         fi
-    done
 
-    # arrival time 이후 자원 대기 시작
-    echo "Starting to wait for resources for job ${JOB_NAME} after arrival time"
+        # 이 지점에서 arrival time에 도달
+        echo "Arrival time reached for job ${JOB_NAME}"
+        # arrival time 도달 시간 기록 (wait time 계산용)
+        echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${JOB_NAME}_arrival_reached.txt
 
-    # 자원 대기 시작
-    while true; do
         # k8s 스케줄러에만 Gang 스케줄링 적용
         if [ "$SCHEDULER" = "k8s" ]; then
             # Gang 스케줄링 로직: 사용 가능한 GPU 수 확인
@@ -145,10 +145,8 @@ wait_for_resources_or_arrival() {
             # Gang 스케줄링: 필요한 모든 GPU가 사용 가능할 때만 작업 제출
             if [ $AVAILABLE_GPUS -ge $WORKER_NUM ]; then
                 echo "Sufficient GPUs available ($AVAILABLE_GPUS >= $WORKER_NUM). Starting job ${JOB_NAME} now."
-                # 대기 종료 시간 기록
-                WAIT_END_TIME=$(date +%s.%N)
-                WAIT_TIME=$(echo "$WAIT_END_TIME - $ARRIVAL_REACHED_TIME" | bc)
-                echo "Job ${JOB_NAME} waited ${WAIT_TIME} seconds after arrival time" > ${SAVEPATH}/${JOB_NAME}_wait_time.txt
+                # job_start.txt 파일에 현재 시간만 기록 (원래 이름 유지)
+                echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${JOB_NAME}_job_start.txt
                 return 0
             else
                 echo "Waiting for sufficient GPU resources for job ${JOB_NAME} ($AVAILABLE_GPUS/$WORKER_NUM available)"
@@ -162,10 +160,8 @@ wait_for_resources_or_arrival() {
             # 대기 중인 포드가 없으면 (이전 작업들이 모두 자원 할당 받은 상태) 즉시 작업 시작
             if [ $PENDING_PODS -eq 0 ]; then
                 echo "Arrival time reached and no pending pods. Starting job ${JOB_NAME} now."
-                # 대기 종료 시간 기록
-                WAIT_END_TIME=$(date +%s.%N)
-                WAIT_TIME=$(echo "$WAIT_END_TIME - $ARRIVAL_REACHED_TIME" | bc)
-                echo "Job ${JOB_NAME} waited ${WAIT_TIME} seconds after arrival time" > ${SAVEPATH}/${JOB_NAME}_wait_time.txt
+                # job_start.txt 파일에 현재 시간만 기록 (원래 이름 유지)
+                echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${JOB_NAME}_job_start.txt
                 return 0
             else
                 # 대기 중인 포드가 있으면 완료된 작업 확인 및 정리
@@ -205,10 +201,8 @@ wait_for_resources_or_arrival() {
                     PENDING_PODS=$(kubectl get pods | grep -e "Pending" | wc -l)
                     if [ $PENDING_PODS -eq 0 ]; then
                         echo "All previous jobs allocated. Starting job ${JOB_NAME} now."
-                        # 대기 종료 시간 기록
-                        WAIT_END_TIME=$(date +%s.%N)
-                        WAIT_TIME=$(echo "$WAIT_END_TIME - $ARRIVAL_REACHED_TIME" | bc)
-                        echo "Job ${JOB_NAME} waited ${WAIT_TIME} seconds after arrival time" > ${SAVEPATH}/${JOB_NAME}_wait_time.txt
+                        # job_start.txt 파일에 현재 시간만 기록 (원래 이름 유지)
+                        echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${JOB_NAME}_job_start.txt
                         return 0
                     fi
                 fi
@@ -219,7 +213,6 @@ wait_for_resources_or_arrival() {
         fi
     done
 }
-
 
 echo "총 GPU 수: 16"
 

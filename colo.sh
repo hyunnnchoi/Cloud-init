@@ -25,7 +25,6 @@ get_available_gpus() {
 }
 
 # 노드에 작업이 스케줄링될 때까지 대기하는 함수
-# 노드에 작업이 스케줄링될 때까지 대기하는 함수 (Pending 상태가 해결될 때까지)
 wait_for_pod_scheduling() {
     JOB_NAME=$1
     WORKER_COUNT=$2
@@ -33,18 +32,15 @@ wait_for_pod_scheduling() {
 
     echo "Waiting for job $JOB_NAME to be scheduled to nodes..."
 
-    # 모든 포드가 Pending 상태를 벗어날 때까지 대기
+    # 모든 워커/치프 포드가 노드에 할당될 때까지 대기
     SCHEDULED_PODS=0
-    TIMEOUT=300  # 원래 타임아웃 유지
+    TIMEOUT=300  # 5분 타임아웃
     START_TIME=$(date +%s)
 
     while [ $SCHEDULED_PODS -lt $WORKER_COUNT ]
     do
-        # 현재 이 작업의 Pending이 아닌 상태(노드에 스케줄링된) 포드 수 계산
+        # 현재 이 작업의 Running 상태이거나 ContainerCreating 상태인 포드 수 계산
         SCHEDULED_PODS=$(kubectl get pods | grep $JOB_NAME_DASH | grep -v Pending | wc -l)
-
-        # Pending 상태 포드 수 (디버깅용)
-        PENDING_PODS=$(kubectl get pods | grep $JOB_NAME_DASH | grep Pending | wc -l)
 
         # 현재 시간 체크
         CURRENT_TIME=$(date +%s)
@@ -59,18 +55,17 @@ wait_for_pod_scheduling() {
 
         if [ $SCHEDULED_PODS -lt $WORKER_COUNT ]; then
             sleep 1
-            echo "Waiting for $JOB_NAME pods to be scheduled ($SCHEDULED_PODS/$WORKER_COUNT scheduled, $PENDING_PODS still pending)"
+            echo "Waiting for $JOB_NAME pods to be scheduled ($SCHEDULED_PODS/$WORKER_COUNT scheduled)"
         else
-            echo "All pods for $JOB_NAME have been scheduled to nodes (no longer pending)"
+            echo "All pods for $JOB_NAME have been scheduled to nodes"
             kubectl get pods -o wide | grep $JOB_NAME_DASH
-            echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${JOB_NAME}_job_finished_pending.txt
             echo "Node allocation for $JOB_NAME:" > ${SAVEPATH}/${JOB_NAME}_node_allocation.txt
             kubectl get pods -o wide | grep $JOB_NAME_DASH | awk '{print $1 "\t" $7}' >> ${SAVEPATH}/${JOB_NAME}_node_allocation.txt
             break
         fi
     done
 }
-# 자원과 arrival_time을 고려하여 대기하는 함수 (스케줄러에 따라 다른 로직 적용)
+
 # 자원과 arrival_time을 고려하여 대기하는 함수 (스케줄러에 따라 다른 로직 적용)
 wait_for_resources_or_arrival() {
     ARRIVAL_TIME=$1
@@ -80,7 +75,6 @@ wait_for_resources_or_arrival() {
 
     echo "Checking resources for job ${JOB_NAME} (arrival time: ${ARRIVAL_TIME}s, workers: $WORKER_NUM)"
 
-    # arrival time에 도달할 때까지 대기
     while true; do
         # arrival time 체크
         CURRENT_EPOCH=$(date +%s)
@@ -93,11 +87,6 @@ wait_for_resources_or_arrival() {
             sleep 1
             continue
         fi
-
-        # 이 지점에서 arrival time에 도달
-        echo "Arrival time reached for job ${JOB_NAME}"
-        # arrival time 도달 시간 기록 (wait time 계산용)
-        echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${JOB_NAME}_arrival_reached.txt
 
         # k8s 스케줄러에만 Gang 스케줄링 적용
         if [ "$SCHEDULER" = "k8s" ]; then
@@ -145,8 +134,6 @@ wait_for_resources_or_arrival() {
             # Gang 스케줄링: 필요한 모든 GPU가 사용 가능할 때만 작업 제출
             if [ $AVAILABLE_GPUS -ge $WORKER_NUM ]; then
                 echo "Sufficient GPUs available ($AVAILABLE_GPUS >= $WORKER_NUM). Starting job ${JOB_NAME} now."
-                # job_start.txt 파일에 현재 시간만 기록 (원래 이름 유지)
-                echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${JOB_NAME}_job_start.txt
                 return 0
             else
                 echo "Waiting for sufficient GPU resources for job ${JOB_NAME} ($AVAILABLE_GPUS/$WORKER_NUM available)"
@@ -160,8 +147,6 @@ wait_for_resources_or_arrival() {
             # 대기 중인 포드가 없으면 (이전 작업들이 모두 자원 할당 받은 상태) 즉시 작업 시작
             if [ $PENDING_PODS -eq 0 ]; then
                 echo "Arrival time reached and no pending pods. Starting job ${JOB_NAME} now."
-                # job_start.txt 파일에 현재 시간만 기록 (원래 이름 유지)
-                echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${JOB_NAME}_job_start.txt
                 return 0
             else
                 # 대기 중인 포드가 있으면 완료된 작업 확인 및 정리
@@ -201,8 +186,6 @@ wait_for_resources_or_arrival() {
                     PENDING_PODS=$(kubectl get pods | grep -e "Pending" | wc -l)
                     if [ $PENDING_PODS -eq 0 ]; then
                         echo "All previous jobs allocated. Starting job ${JOB_NAME} now."
-                        # job_start.txt 파일에 현재 시간만 기록 (원래 이름 유지)
-                        echo $(date "+%H:%M:%S.%N") > ${SAVEPATH}/${JOB_NAME}_job_start.txt
                         return 0
                     fi
                 fi
@@ -214,216 +197,252 @@ wait_for_resources_or_arrival() {
     done
 }
 
+
 echo "총 GPU 수: 16"
 
-# 작업: id0_imagenet_vgg16_sync_batch256 (모델: vgg16, 워커: 2, 도착시간: 0초)
-wait_for_resources_or_arrival 0 id0_imagenet_vgg16_sync_batch256 2 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id0_imagenet_vgg16_sync_batch256 시작" > ${SAVEPATH}/id0_imagenet_vgg16_sync_batch256_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id0_imagenet_vgg16_sync_batch256_colo.yaml
-wait_for_pod_scheduling id0_imagenet_vgg16_sync_batch256 2
+# 작업: id0_squad_bert_sync_batch8 (모델: bert, 워커: 2, 도착시간: 0초)
+wait_for_resources_or_arrival 0 id0_squad_bert_sync_batch8 2 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id0_squad_bert_sync_batch8 시작" > ${SAVEPATH}/id0_squad_bert_sync_batch8_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id0_squad_bert_sync_batch8_colo.yaml
+wait_for_pod_scheduling id0_squad_bert_sync_batch8 2
 
 
-# 작업: id1_cifar10_resnet110_sync_batch8192 (모델: resnet110, 워커: 8, 도착시간: 1초)
-wait_for_resources_or_arrival 1 id1_cifar10_resnet110_sync_batch8192 8 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id1_cifar10_resnet110_sync_batch8192 시작" > ${SAVEPATH}/id1_cifar10_resnet110_sync_batch8192_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id1_cifar10_resnet110_sync_batch8192_colo.yaml
-wait_for_pod_scheduling id1_cifar10_resnet110_sync_batch8192 8
+# 작업: id1_imagenet_inception3_sync_batch128 (모델: inception3, 워커: 2, 도착시간: 1050초)
+wait_for_resources_or_arrival 1050 id1_imagenet_inception3_sync_batch128 2 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id1_imagenet_inception3_sync_batch128 시작" > ${SAVEPATH}/id1_imagenet_inception3_sync_batch128_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id1_imagenet_inception3_sync_batch128_colo.yaml
+wait_for_pod_scheduling id1_imagenet_inception3_sync_batch128 2
 
 
-# 작업: id2_squad_gpt2_sync_batch8 (모델: gpt2, 워커: 2, 도착시간: 42초)
-wait_for_resources_or_arrival 42 id2_squad_gpt2_sync_batch8 2 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id2_squad_gpt2_sync_batch8 시작" > ${SAVEPATH}/id2_squad_gpt2_sync_batch8_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id2_squad_gpt2_sync_batch8_colo.yaml
-wait_for_pod_scheduling id2_squad_gpt2_sync_batch8 2
+# 작업: id2_imagenet_inception3_sync_batch128 (모델: inception3, 워커: 2, 도착시간: 1866초)
+wait_for_resources_or_arrival 1866 id2_imagenet_inception3_sync_batch128 2 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id2_imagenet_inception3_sync_batch128 시작" > ${SAVEPATH}/id2_imagenet_inception3_sync_batch128_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id2_imagenet_inception3_sync_batch128_colo.yaml
+wait_for_pod_scheduling id2_imagenet_inception3_sync_batch128 2
 
 
-# 작업: id3_squad_bertl_sync_batch8 (모델: bertl, 워커: 2, 도착시간: 80초)
-wait_for_resources_or_arrival 80 id3_squad_bertl_sync_batch8 2 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id3_squad_bertl_sync_batch8 시작" > ${SAVEPATH}/id3_squad_bertl_sync_batch8_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id3_squad_bertl_sync_batch8_colo.yaml
-wait_for_pod_scheduling id3_squad_bertl_sync_batch8 2
+# 작업: id3_squad_bert_sync_batch32 (모델: bert, 워커: 8, 도착시간: 3619초)
+wait_for_resources_or_arrival 3619 id3_squad_bert_sync_batch32 8 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id3_squad_bert_sync_batch32 시작" > ${SAVEPATH}/id3_squad_bert_sync_batch32_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id3_squad_bert_sync_batch32_colo.yaml
+wait_for_pod_scheduling id3_squad_bert_sync_batch32 8
 
 
-# 작업: id4_squad_gpt2xl_sync_batch8 (모델: gpt2xl, 워커: 2, 도착시간: 107초)
-wait_for_resources_or_arrival 107 id4_squad_gpt2xl_sync_batch8 2 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id4_squad_gpt2xl_sync_batch8 시작" > ${SAVEPATH}/id4_squad_gpt2xl_sync_batch8_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id4_squad_gpt2xl_sync_batch8_colo.yaml
-wait_for_pod_scheduling id4_squad_gpt2xl_sync_batch8 2
+# 작업: id4_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 4133초)
+wait_for_resources_or_arrival 4133 id4_cifar10_densenet100_k12_sync_batch1024 8 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id4_cifar10_densenet100_k12_sync_batch1024 시작" > ${SAVEPATH}/id4_cifar10_densenet100_k12_sync_batch1024_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id4_cifar10_densenet100_k12_sync_batch1024_colo.yaml
+wait_for_pod_scheduling id4_cifar10_densenet100_k12_sync_batch1024 8
 
 
-# 작업: id5_squad_gpt2l_sync_batch32 (모델: gpt2l, 워커: 8, 도착시간: 108초)
-wait_for_resources_or_arrival 108 id5_squad_gpt2l_sync_batch32 8 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id5_squad_gpt2l_sync_batch32 시작" > ${SAVEPATH}/id5_squad_gpt2l_sync_batch32_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id5_squad_gpt2l_sync_batch32_colo.yaml
-wait_for_pod_scheduling id5_squad_gpt2l_sync_batch32 8
+# 작업: id5_cifar10_resnet110_sync_batch8192 (모델: resnet110, 워커: 8, 도착시간: 4235초)
+wait_for_resources_or_arrival 4235 id5_cifar10_resnet110_sync_batch8192 8 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id5_cifar10_resnet110_sync_batch8192 시작" > ${SAVEPATH}/id5_cifar10_resnet110_sync_batch8192_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id5_cifar10_resnet110_sync_batch8192_colo.yaml
+wait_for_pod_scheduling id5_cifar10_resnet110_sync_batch8192 8
 
 
-# 작업: id6_squad_gpt2m_sync_batch8 (모델: gpt2m, 워커: 2, 도착시간: 125초)
-wait_for_resources_or_arrival 125 id6_squad_gpt2m_sync_batch8 2 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id6_squad_gpt2m_sync_batch8 시작" > ${SAVEPATH}/id6_squad_gpt2m_sync_batch8_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id6_squad_gpt2m_sync_batch8_colo.yaml
-wait_for_pod_scheduling id6_squad_gpt2m_sync_batch8 2
+# 작업: id6_imagenet_inception3_sync_batch128 (모델: inception3, 워커: 2, 도착시간: 5239초)
+wait_for_resources_or_arrival 5239 id6_imagenet_inception3_sync_batch128 2 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id6_imagenet_inception3_sync_batch128 시작" > ${SAVEPATH}/id6_imagenet_inception3_sync_batch128_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id6_imagenet_inception3_sync_batch128_colo.yaml
+wait_for_pod_scheduling id6_imagenet_inception3_sync_batch128 2
 
 
-# 작업: id7_squad_gpt2m_sync_batch32 (모델: gpt2m, 워커: 8, 도착시간: 219초)
-wait_for_resources_or_arrival 219 id7_squad_gpt2m_sync_batch32 8 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id7_squad_gpt2m_sync_batch32 시작" > ${SAVEPATH}/id7_squad_gpt2m_sync_batch32_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id7_squad_gpt2m_sync_batch32_colo.yaml
-wait_for_pod_scheduling id7_squad_gpt2m_sync_batch32 8
+# 작업: id7_cifar10_resnet110_sync_batch2048 (모델: resnet110, 워커: 2, 도착시간: 6388초)
+wait_for_resources_or_arrival 6388 id7_cifar10_resnet110_sync_batch2048 2 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id7_cifar10_resnet110_sync_batch2048 시작" > ${SAVEPATH}/id7_cifar10_resnet110_sync_batch2048_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id7_cifar10_resnet110_sync_batch2048_colo.yaml
+wait_for_pod_scheduling id7_cifar10_resnet110_sync_batch2048 2
 
 
-# 작업: id8_cifar10_resnet110_sync_batch4096 (모델: resnet110, 워커: 4, 도착시간: 337초)
-wait_for_resources_or_arrival 337 id8_cifar10_resnet110_sync_batch4096 4 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id8_cifar10_resnet110_sync_batch4096 시작" > ${SAVEPATH}/id8_cifar10_resnet110_sync_batch4096_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id8_cifar10_resnet110_sync_batch4096_colo.yaml
-wait_for_pod_scheduling id8_cifar10_resnet110_sync_batch4096 4
+# 작업: id8_squad_gpt2_sync_batch8 (모델: gpt2, 워커: 2, 도착시간: 7050초)
+wait_for_resources_or_arrival 7050 id8_squad_gpt2_sync_batch8 2 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id8_squad_gpt2_sync_batch8 시작" > ${SAVEPATH}/id8_squad_gpt2_sync_batch8_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id8_squad_gpt2_sync_batch8_colo.yaml
+wait_for_pod_scheduling id8_squad_gpt2_sync_batch8 2
 
 
-# 작업: id9_squad_bert_sync_batch16 (모델: bert, 워커: 4, 도착시간: 407초)
-wait_for_resources_or_arrival 407 id9_squad_bert_sync_batch16 4 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id9_squad_bert_sync_batch16 시작" > ${SAVEPATH}/id9_squad_bert_sync_batch16_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id9_squad_bert_sync_batch16_colo.yaml
-wait_for_pod_scheduling id9_squad_bert_sync_batch16 4
+# 작업: id9_imagenet_vgg16_sync_batch1024 (모델: vgg16, 워커: 8, 도착시간: 8234초)
+wait_for_resources_or_arrival 8234 id9_imagenet_vgg16_sync_batch1024 8 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id9_imagenet_vgg16_sync_batch1024 시작" > ${SAVEPATH}/id9_imagenet_vgg16_sync_batch1024_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id9_imagenet_vgg16_sync_batch1024_colo.yaml
+wait_for_pod_scheduling id9_imagenet_vgg16_sync_batch1024 8
 
 
-# 작업: id10_imagenet_resnet50_sync_batch512 (모델: resnet50, 워커: 4, 도착시간: 605초)
-wait_for_resources_or_arrival 605 id10_imagenet_resnet50_sync_batch512 4 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id10_imagenet_resnet50_sync_batch512 시작" > ${SAVEPATH}/id10_imagenet_resnet50_sync_batch512_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id10_imagenet_resnet50_sync_batch512_colo.yaml
-wait_for_pod_scheduling id10_imagenet_resnet50_sync_batch512 4
+# 작업: id10_cifar10_resnet110_sync_batch8192 (모델: resnet110, 워커: 8, 도착시간: 8782초)
+wait_for_resources_or_arrival 8782 id10_cifar10_resnet110_sync_batch8192 8 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id10_cifar10_resnet110_sync_batch8192 시작" > ${SAVEPATH}/id10_cifar10_resnet110_sync_batch8192_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id10_cifar10_resnet110_sync_batch8192_colo.yaml
+wait_for_pod_scheduling id10_cifar10_resnet110_sync_batch8192 8
 
 
-# 작업: id11_squad_gpt2xl_sync_batch16 (모델: gpt2xl, 워커: 4, 도착시간: 684초)
-wait_for_resources_or_arrival 684 id11_squad_gpt2xl_sync_batch16 4 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id11_squad_gpt2xl_sync_batch16 시작" > ${SAVEPATH}/id11_squad_gpt2xl_sync_batch16_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id11_squad_gpt2xl_sync_batch16_colo.yaml
-wait_for_pod_scheduling id11_squad_gpt2xl_sync_batch16 4
+# 작업: id11_squad_gpt2_sync_batch32 (모델: gpt2, 워커: 8, 도착시간: 9376초)
+wait_for_resources_or_arrival 9376 id11_squad_gpt2_sync_batch32 8 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id11_squad_gpt2_sync_batch32 시작" > ${SAVEPATH}/id11_squad_gpt2_sync_batch32_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id11_squad_gpt2_sync_batch32_colo.yaml
+wait_for_pod_scheduling id11_squad_gpt2_sync_batch32 8
 
 
-# 작업: id12_squad_gpt2xl_sync_batch32 (모델: gpt2xl, 워커: 8, 도착시간: 871초)
-wait_for_resources_or_arrival 871 id12_squad_gpt2xl_sync_batch32 8 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id12_squad_gpt2xl_sync_batch32 시작" > ${SAVEPATH}/id12_squad_gpt2xl_sync_batch32_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id12_squad_gpt2xl_sync_batch32_colo.yaml
-wait_for_pod_scheduling id12_squad_gpt2xl_sync_batch32 8
+# 작업: id12_imagenet_googlenet_sync_batch2048 (모델: googlenet, 워커: 8, 도착시간: 9824초)
+wait_for_resources_or_arrival 9824 id12_imagenet_googlenet_sync_batch2048 8 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id12_imagenet_googlenet_sync_batch2048 시작" > ${SAVEPATH}/id12_imagenet_googlenet_sync_batch2048_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id12_imagenet_googlenet_sync_batch2048_colo.yaml
+wait_for_pod_scheduling id12_imagenet_googlenet_sync_batch2048 8
 
 
-# 작업: id13_imagenet_resnet50_sync_batch1024 (모델: resnet50, 워커: 8, 도착시간: 1015초)
-wait_for_resources_or_arrival 1015 id13_imagenet_resnet50_sync_batch1024 8 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id13_imagenet_resnet50_sync_batch1024 시작" > ${SAVEPATH}/id13_imagenet_resnet50_sync_batch1024_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id13_imagenet_resnet50_sync_batch1024_colo.yaml
-wait_for_pod_scheduling id13_imagenet_resnet50_sync_batch1024 8
+# 작업: id13_cifar10_densenet100_k12_sync_batch512 (모델: densenet100_k12, 워커: 4, 도착시간: 9845초)
+wait_for_resources_or_arrival 9845 id13_cifar10_densenet100_k12_sync_batch512 4 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id13_cifar10_densenet100_k12_sync_batch512 시작" > ${SAVEPATH}/id13_cifar10_densenet100_k12_sync_batch512_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id13_cifar10_densenet100_k12_sync_batch512_colo.yaml
+wait_for_pod_scheduling id13_cifar10_densenet100_k12_sync_batch512 4
 
 
-# 작업: id14_imagenet_inception3_sync_batch256 (모델: inception3, 워커: 4, 도착시간: 1060초)
-wait_for_resources_or_arrival 1060 id14_imagenet_inception3_sync_batch256 4 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id14_imagenet_inception3_sync_batch256 시작" > ${SAVEPATH}/id14_imagenet_inception3_sync_batch256_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id14_imagenet_inception3_sync_batch256_colo.yaml
-wait_for_pod_scheduling id14_imagenet_inception3_sync_batch256 4
+# 작업: id14_squad_gpt2_sync_batch16 (모델: gpt2, 워커: 4, 도착시간: 9937초)
+wait_for_resources_or_arrival 9937 id14_squad_gpt2_sync_batch16 4 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id14_squad_gpt2_sync_batch16 시작" > ${SAVEPATH}/id14_squad_gpt2_sync_batch16_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id14_squad_gpt2_sync_batch16_colo.yaml
+wait_for_pod_scheduling id14_squad_gpt2_sync_batch16 4
 
 
-# 작업: id15_squad_gpt2m_sync_batch16 (모델: gpt2m, 워커: 4, 도착시간: 1067초)
-wait_for_resources_or_arrival 1067 id15_squad_gpt2m_sync_batch16 4 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id15_squad_gpt2m_sync_batch16 시작" > ${SAVEPATH}/id15_squad_gpt2m_sync_batch16_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id15_squad_gpt2m_sync_batch16_colo.yaml
-wait_for_pod_scheduling id15_squad_gpt2m_sync_batch16 4
+# 작업: id15_imagenet_googlenet_sync_batch1024 (모델: googlenet, 워커: 4, 도착시간: 9962초)
+wait_for_resources_or_arrival 9962 id15_imagenet_googlenet_sync_batch1024 4 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id15_imagenet_googlenet_sync_batch1024 시작" > ${SAVEPATH}/id15_imagenet_googlenet_sync_batch1024_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id15_imagenet_googlenet_sync_batch1024_colo.yaml
+wait_for_pod_scheduling id15_imagenet_googlenet_sync_batch1024 4
 
 
-# 작업: id16_imagenet_vgg16_sync_batch1024 (모델: vgg16, 워커: 8, 도착시간: 1103초)
-wait_for_resources_or_arrival 1103 id16_imagenet_vgg16_sync_batch1024 8 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id16_imagenet_vgg16_sync_batch1024 시작" > ${SAVEPATH}/id16_imagenet_vgg16_sync_batch1024_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id16_imagenet_vgg16_sync_batch1024_colo.yaml
-wait_for_pod_scheduling id16_imagenet_vgg16_sync_batch1024 8
+# 작업: id16_cifar10_resnet110_sync_batch2048 (모델: resnet110, 워커: 2, 도착시간: 10775초)
+wait_for_resources_or_arrival 10775 id16_cifar10_resnet110_sync_batch2048 2 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id16_cifar10_resnet110_sync_batch2048 시작" > ${SAVEPATH}/id16_cifar10_resnet110_sync_batch2048_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id16_cifar10_resnet110_sync_batch2048_colo.yaml
+wait_for_pod_scheduling id16_cifar10_resnet110_sync_batch2048 2
 
 
-# 작업: id17_squad_gpt2_sync_batch32 (모델: gpt2, 워커: 8, 도착시간: 1186초)
-wait_for_resources_or_arrival 1186 id17_squad_gpt2_sync_batch32 8 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id17_squad_gpt2_sync_batch32 시작" > ${SAVEPATH}/id17_squad_gpt2_sync_batch32_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id17_squad_gpt2_sync_batch32_colo.yaml
-wait_for_pod_scheduling id17_squad_gpt2_sync_batch32 8
+# 작업: id17_cifar10_densenet100_k12_sync_batch512 (모델: densenet100_k12, 워커: 4, 도착시간: 11078초)
+wait_for_resources_or_arrival 11078 id17_cifar10_densenet100_k12_sync_batch512 4 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id17_cifar10_densenet100_k12_sync_batch512 시작" > ${SAVEPATH}/id17_cifar10_densenet100_k12_sync_batch512_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id17_cifar10_densenet100_k12_sync_batch512_colo.yaml
+wait_for_pod_scheduling id17_cifar10_densenet100_k12_sync_batch512 4
 
 
-# 작업: id18_squad_bert_sync_batch16 (모델: bert, 워커: 4, 도착시간: 1269초)
-wait_for_resources_or_arrival 1269 id18_squad_bert_sync_batch16 4 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id18_squad_bert_sync_batch16 시작" > ${SAVEPATH}/id18_squad_bert_sync_batch16_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id18_squad_bert_sync_batch16_colo.yaml
-wait_for_pod_scheduling id18_squad_bert_sync_batch16 4
+# 작업: id18_imagenet_vgg16_sync_batch256 (모델: vgg16, 워커: 2, 도착시간: 11649초)
+wait_for_resources_or_arrival 11649 id18_imagenet_vgg16_sync_batch256 2 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id18_imagenet_vgg16_sync_batch256 시작" > ${SAVEPATH}/id18_imagenet_vgg16_sync_batch256_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id18_imagenet_vgg16_sync_batch256_colo.yaml
+wait_for_pod_scheduling id18_imagenet_vgg16_sync_batch256 2
 
 
-# 작업: id19_imagenet_resnet50_sync_batch512 (모델: resnet50, 워커: 4, 도착시간: 1337초)
-wait_for_resources_or_arrival 1337 id19_imagenet_resnet50_sync_batch512 4 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id19_imagenet_resnet50_sync_batch512 시작" > ${SAVEPATH}/id19_imagenet_resnet50_sync_batch512_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id19_imagenet_resnet50_sync_batch512_colo.yaml
-wait_for_pod_scheduling id19_imagenet_resnet50_sync_batch512 4
+# 작업: id19_imagenet_inception3_sync_batch512 (모델: inception3, 워커: 8, 도착시간: 13563초)
+wait_for_resources_or_arrival 13563 id19_imagenet_inception3_sync_batch512 8 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id19_imagenet_inception3_sync_batch512 시작" > ${SAVEPATH}/id19_imagenet_inception3_sync_batch512_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id19_imagenet_inception3_sync_batch512_colo.yaml
+wait_for_pod_scheduling id19_imagenet_inception3_sync_batch512 8
 
 
-# 작업: id20_squad_bert_sync_batch32 (모델: bert, 워커: 8, 도착시간: 1361초)
-wait_for_resources_or_arrival 1361 id20_squad_bert_sync_batch32 8 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id20_squad_bert_sync_batch32 시작" > ${SAVEPATH}/id20_squad_bert_sync_batch32_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id20_squad_bert_sync_batch32_colo.yaml
-wait_for_pod_scheduling id20_squad_bert_sync_batch32 8
+# 작업: id20_squad_bert_sync_batch16 (모델: bert, 워커: 4, 도착시간: 13793초)
+wait_for_resources_or_arrival 13793 id20_squad_bert_sync_batch16 4 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id20_squad_bert_sync_batch16 시작" > ${SAVEPATH}/id20_squad_bert_sync_batch16_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id20_squad_bert_sync_batch16_colo.yaml
+wait_for_pod_scheduling id20_squad_bert_sync_batch16 4
 
 
-# 작업: id21_squad_bertl_sync_batch32 (모델: bertl, 워커: 8, 도착시간: 1424초)
-wait_for_resources_or_arrival 1424 id21_squad_bertl_sync_batch32 8 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id21_squad_bertl_sync_batch32 시작" > ${SAVEPATH}/id21_squad_bertl_sync_batch32_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id21_squad_bertl_sync_batch32_colo.yaml
-wait_for_pod_scheduling id21_squad_bertl_sync_batch32 8
+# 작업: id21_imagenet_vgg16_sync_batch512 (모델: vgg16, 워커: 4, 도착시간: 14217초)
+wait_for_resources_or_arrival 14217 id21_imagenet_vgg16_sync_batch512 4 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id21_imagenet_vgg16_sync_batch512 시작" > ${SAVEPATH}/id21_imagenet_vgg16_sync_batch512_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id21_imagenet_vgg16_sync_batch512_colo.yaml
+wait_for_pod_scheduling id21_imagenet_vgg16_sync_batch512 4
 
 
-# 작업: id22_imagenet_vgg16_sync_batch1024 (모델: vgg16, 워커: 8, 도착시간: 1460초)
-wait_for_resources_or_arrival 1460 id22_imagenet_vgg16_sync_batch1024 8 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id22_imagenet_vgg16_sync_batch1024 시작" > ${SAVEPATH}/id22_imagenet_vgg16_sync_batch1024_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id22_imagenet_vgg16_sync_batch1024_colo.yaml
-wait_for_pod_scheduling id22_imagenet_vgg16_sync_batch1024 8
+# 작업: id22_imagenet_inception3_sync_batch512 (모델: inception3, 워커: 8, 도착시간: 15349초)
+wait_for_resources_or_arrival 15349 id22_imagenet_inception3_sync_batch512 8 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id22_imagenet_inception3_sync_batch512 시작" > ${SAVEPATH}/id22_imagenet_inception3_sync_batch512_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id22_imagenet_inception3_sync_batch512_colo.yaml
+wait_for_pod_scheduling id22_imagenet_inception3_sync_batch512 8
 
 
-# 작업: id23_squad_gpt2l_sync_batch16 (모델: gpt2l, 워커: 4, 도착시간: 1730초)
-wait_for_resources_or_arrival 1730 id23_squad_gpt2l_sync_batch16 4 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id23_squad_gpt2l_sync_batch16 시작" > ${SAVEPATH}/id23_squad_gpt2l_sync_batch16_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id23_squad_gpt2l_sync_batch16_colo.yaml
-wait_for_pod_scheduling id23_squad_gpt2l_sync_batch16 4
+# 작업: id23_imagenet_googlenet_sync_batch2048 (모델: googlenet, 워커: 8, 도착시간: 15558초)
+wait_for_resources_or_arrival 15558 id23_imagenet_googlenet_sync_batch2048 8 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id23_imagenet_googlenet_sync_batch2048 시작" > ${SAVEPATH}/id23_imagenet_googlenet_sync_batch2048_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id23_imagenet_googlenet_sync_batch2048_colo.yaml
+wait_for_pod_scheduling id23_imagenet_googlenet_sync_batch2048 8
 
 
-# 작업: id24_squad_gpt2l_sync_batch32 (모델: gpt2l, 워커: 8, 도착시간: 1873초)
-wait_for_resources_or_arrival 1873 id24_squad_gpt2l_sync_batch32 8 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id24_squad_gpt2l_sync_batch32 시작" > ${SAVEPATH}/id24_squad_gpt2l_sync_batch32_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id24_squad_gpt2l_sync_batch32_colo.yaml
-wait_for_pod_scheduling id24_squad_gpt2l_sync_batch32 8
+# 작업: id24_cifar10_resnet110_sync_batch8192 (모델: resnet110, 워커: 8, 도착시간: 15623초)
+wait_for_resources_or_arrival 15623 id24_cifar10_resnet110_sync_batch8192 8 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id24_cifar10_resnet110_sync_batch8192 시작" > ${SAVEPATH}/id24_cifar10_resnet110_sync_batch8192_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id24_cifar10_resnet110_sync_batch8192_colo.yaml
+wait_for_pod_scheduling id24_cifar10_resnet110_sync_batch8192 8
 
 
-# 작업: id25_imagenet_inception3_sync_batch256 (모델: inception3, 워커: 4, 도착시간: 1970초)
-wait_for_resources_or_arrival 1970 id25_imagenet_inception3_sync_batch256 4 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id25_imagenet_inception3_sync_batch256 시작" > ${SAVEPATH}/id25_imagenet_inception3_sync_batch256_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id25_imagenet_inception3_sync_batch256_colo.yaml
-wait_for_pod_scheduling id25_imagenet_inception3_sync_batch256 4
+# 작업: id25_imagenet_googlenet_sync_batch1024 (모델: googlenet, 워커: 4, 도착시간: 15897초)
+wait_for_resources_or_arrival 15897 id25_imagenet_googlenet_sync_batch1024 4 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id25_imagenet_googlenet_sync_batch1024 시작" > ${SAVEPATH}/id25_imagenet_googlenet_sync_batch1024_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id25_imagenet_googlenet_sync_batch1024_colo.yaml
+wait_for_pod_scheduling id25_imagenet_googlenet_sync_batch1024 4
 
 
-# 작업: id26_imagenet_inception3_sync_batch256 (모델: inception3, 워커: 4, 도착시간: 1990초)
-wait_for_resources_or_arrival 1990 id26_imagenet_inception3_sync_batch256 4 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id26_imagenet_inception3_sync_batch256 시작" > ${SAVEPATH}/id26_imagenet_inception3_sync_batch256_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id26_imagenet_inception3_sync_batch256_colo.yaml
-wait_for_pod_scheduling id26_imagenet_inception3_sync_batch256 4
+# 작업: id26_cifar10_densenet100_k12_sync_batch512 (모델: densenet100_k12, 워커: 4, 도착시간: 16039초)
+wait_for_resources_or_arrival 16039 id26_cifar10_densenet100_k12_sync_batch512 4 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id26_cifar10_densenet100_k12_sync_batch512 시작" > ${SAVEPATH}/id26_cifar10_densenet100_k12_sync_batch512_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id26_cifar10_densenet100_k12_sync_batch512_colo.yaml
+wait_for_pod_scheduling id26_cifar10_densenet100_k12_sync_batch512 4
 
 
-# 작업: id27_squad_gpt2_sync_batch32 (모델: gpt2, 워커: 8, 도착시간: 2013초)
-wait_for_resources_or_arrival 2013 id27_squad_gpt2_sync_batch32 8 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id27_squad_gpt2_sync_batch32 시작" > ${SAVEPATH}/id27_squad_gpt2_sync_batch32_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id27_squad_gpt2_sync_batch32_colo.yaml
-wait_for_pod_scheduling id27_squad_gpt2_sync_batch32 8
+# 작업: id27_imagenet_vgg16_sync_batch1024 (모델: vgg16, 워커: 8, 도착시간: 18172초)
+wait_for_resources_or_arrival 18172 id27_imagenet_vgg16_sync_batch1024 8 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id27_imagenet_vgg16_sync_batch1024 시작" > ${SAVEPATH}/id27_imagenet_vgg16_sync_batch1024_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id27_imagenet_vgg16_sync_batch1024_colo.yaml
+wait_for_pod_scheduling id27_imagenet_vgg16_sync_batch1024 8
 
 
-# 작업: id28_squad_bertl_sync_batch16 (모델: bertl, 워커: 4, 도착시간: 2016초)
-wait_for_resources_or_arrival 2016 id28_squad_bertl_sync_batch16 4 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id28_squad_bertl_sync_batch16 시작" > ${SAVEPATH}/id28_squad_bertl_sync_batch16_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id28_squad_bertl_sync_batch16_colo.yaml
-wait_for_pod_scheduling id28_squad_bertl_sync_batch16 4
+# 작업: id28_imagenet_vgg16_sync_batch512 (모델: vgg16, 워커: 4, 도착시간: 19498초)
+wait_for_resources_or_arrival 19498 id28_imagenet_vgg16_sync_batch512 4 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id28_imagenet_vgg16_sync_batch512 시작" > ${SAVEPATH}/id28_imagenet_vgg16_sync_batch512_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id28_imagenet_vgg16_sync_batch512_colo.yaml
+wait_for_pod_scheduling id28_imagenet_vgg16_sync_batch512 4
 
 
-# 작업: id29_cifar10_resnet110_sync_batch8192 (모델: resnet110, 워커: 8, 도착시간: 2110초)
-wait_for_resources_or_arrival 2110 id29_cifar10_resnet110_sync_batch8192 8 colo
-echo "$(date "+%H:%M:%S.%N") - 작업 id29_cifar10_resnet110_sync_batch8192 시작" > ${SAVEPATH}/id29_cifar10_resnet110_sync_batch8192_job_start.txt
-kubectl apply -f ${TFPATH}/net_script/id29_cifar10_resnet110_sync_batch8192_colo.yaml
-wait_for_pod_scheduling id29_cifar10_resnet110_sync_batch8192 8
+# 작업: id29_imagenet_googlenet_sync_batch1024 (모델: googlenet, 워커: 4, 도착시간: 20305초)
+wait_for_resources_or_arrival 20305 id29_imagenet_googlenet_sync_batch1024 4 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id29_imagenet_googlenet_sync_batch1024 시작" > ${SAVEPATH}/id29_imagenet_googlenet_sync_batch1024_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id29_imagenet_googlenet_sync_batch1024_colo.yaml
+wait_for_pod_scheduling id29_imagenet_googlenet_sync_batch1024 4
+
+
+# 작업: id30_squad_bert_sync_batch16 (모델: bert, 워커: 4, 도착시간: 21953초)
+wait_for_resources_or_arrival 21953 id30_squad_bert_sync_batch16 4 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id30_squad_bert_sync_batch16 시작" > ${SAVEPATH}/id30_squad_bert_sync_batch16_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id30_squad_bert_sync_batch16_colo.yaml
+wait_for_pod_scheduling id30_squad_bert_sync_batch16 4
+
+
+# 작업: id31_squad_gpt2_sync_batch16 (모델: gpt2, 워커: 4, 도착시간: 23261초)
+wait_for_resources_or_arrival 23261 id31_squad_gpt2_sync_batch16 4 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id31_squad_gpt2_sync_batch16 시작" > ${SAVEPATH}/id31_squad_gpt2_sync_batch16_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id31_squad_gpt2_sync_batch16_colo.yaml
+wait_for_pod_scheduling id31_squad_gpt2_sync_batch16 4
+
+
+# 작업: id32_squad_bert_sync_batch32 (모델: bert, 워커: 8, 도착시간: 23427초)
+wait_for_resources_or_arrival 23427 id32_squad_bert_sync_batch32 8 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id32_squad_bert_sync_batch32 시작" > ${SAVEPATH}/id32_squad_bert_sync_batch32_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id32_squad_bert_sync_batch32_colo.yaml
+wait_for_pod_scheduling id32_squad_bert_sync_batch32 8
+
+
+# 작업: id33_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 25220초)
+wait_for_resources_or_arrival 25220 id33_cifar10_densenet100_k12_sync_batch1024 8 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id33_cifar10_densenet100_k12_sync_batch1024 시작" > ${SAVEPATH}/id33_cifar10_densenet100_k12_sync_batch1024_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id33_cifar10_densenet100_k12_sync_batch1024_colo.yaml
+wait_for_pod_scheduling id33_cifar10_densenet100_k12_sync_batch1024 8
+
+
+# 작업: id34_squad_gpt2_sync_batch32 (모델: gpt2, 워커: 8, 도착시간: 25843초)
+wait_for_resources_or_arrival 25843 id34_squad_gpt2_sync_batch32 8 colo
+echo "$(date "+%H:%M:%S.%N") - 작업 id34_squad_gpt2_sync_batch32 시작" > ${SAVEPATH}/id34_squad_gpt2_sync_batch32_job_start.txt
+kubectl apply -f ${TFPATH}/net_script/id34_squad_gpt2_sync_batch32_colo.yaml
+wait_for_pod_scheduling id34_squad_gpt2_sync_batch32 8
 
 
 ENDTIME=`date "+%H:%M:%S.%N"`

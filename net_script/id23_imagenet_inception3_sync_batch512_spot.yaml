@@ -1,7 +1,7 @@
 apiVersion: kubeflow.org/v1
 kind: "TFJob"
 metadata:
-  name: id29-cifar10-resnet44-sync-batch8192
+  name: id23-imagenet-inception3-sync-batch512
 spec:
   runPolicy:
     cleanPodPolicy: None
@@ -13,7 +13,7 @@ spec:
           annotations:
             "tensorspot/num_controller": "1"
             "tensorspot/num_worker": "8"
-            "tensorspot/net_request": "120"
+            "tensorspot/net_request": "2833"
             "tensorspot/gpu_limit": "1.0"
             "tensorspot/gpu_request": "1.0"
             "tensorspot/gpu_mem": "17179869184"
@@ -28,14 +28,14 @@ spec:
                 make;
                 JOB=`python /tf_cnn_benchmarks/job_name.py`;
                 CONTROLLER_HOST=`python -c "import os, json; tf_config = json.loads(os.environ.get('TF_CONFIG') or '{}'); cluster_config = tf_config.get('cluster', {}); controller_host = cluster_config.get('controller'); print(','.join(controller_host))"`;
-                mkdir -p /result/id29_cifar10_resnet44_sync_batch8192;
-                top -d 0.1 -b | grep tf_cnn > /result/id29_cifar10_resnet44_sync_batch8192/id29_cifar10_resnet44_sync_batch8192_${JOB}_cpu.txt &
-                echo "id29_cifar10_resnet44_sync_batch8192" > /tf_cnn_benchmarks/model.txt;
+                mkdir -p /result/id23_imagenet_inception3_sync_batch512;
+                top -d 0.1 -b | grep tf_cnn > /result/id23_imagenet_inception3_sync_batch512/id23_imagenet_inception3_sync_batch512_${JOB}_cpu.txt &
+                echo "id23_imagenet_inception3_sync_batch512" > /tf_cnn_benchmarks/model.txt;
                 STARTTIME=`date "+%H:%M:%S.%N"`;
-                echo "$STARTTIME" > /result/id29_cifar10_resnet44_sync_batch8192/id29_cifar10_resnet44_sync_batch8192_${JOB}_start_time.txt;
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet44 --data_name=cifar10 --display_every=1 --batch_size=1024 --cross_replica_sync=true --num_batches=322 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id29_cifar10_resnet44_sync_batch8192/id29_cifar10_resnet44_sync_batch8192_${JOB}_log.txt;
+                echo "$STARTTIME" > /result/id23_imagenet_inception3_sync_batch512/id23_imagenet_inception3_sync_batch512_${JOB}_start_time.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=inception3 --data_name=imagenet --display_every=1 --batch_size=64 --cross_replica_sync=true --num_batches=228 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id23_imagenet_inception3_sync_batch512/id23_imagenet_inception3_sync_batch512_${JOB}_log.txt;
                 ENDTIME=`date "+%H:%M:%S.%N"`;
-                echo "$ENDTIME" > /result/id29_cifar10_resnet44_sync_batch8192/id29_cifar10_resnet44_sync_batch8192_${JOB}_end_time.txt
+                echo "$ENDTIME" > /result/id23_imagenet_inception3_sync_batch512/id23_imagenet_inception3_sync_batch512_${JOB}_end_time.txt
             ports:
             - containerPort: 2222
               name: tfjob-port
@@ -71,7 +71,7 @@ spec:
           annotations:
             "tensorspot/num_controller": "1"
             "tensorspot/num_worker": "8"
-            "tensorspot/net_request": "120"
+            "tensorspot/net_request": "2833"
             "tensorspot/placement_policy": "spot"
         spec:
           containers:
@@ -81,12 +81,12 @@ spec:
               - |
                 JOB=`python /tf_cnn_benchmarks/job_name.py`;
                 CONTROLLER_HOST=`python -c "import os, json; tf_config = json.loads(os.environ.get('TF_CONFIG') or '{}'); cluster_config = tf_config.get('cluster', {}); controller_host = cluster_config.get('controller'); print(','.join(controller_host))"`;
-                mkdir -p /result/id29_cifar10_resnet44_sync_batch8192;
-                echo "id29_cifar10_resnet44_sync_batch8192" > /tf_cnn_benchmarks/model.txt;
-                top -d 0.1 -b | grep tf_cnn > /result/id29_cifar10_resnet44_sync_batch8192/id29_cifar10_resnet44_sync_batch8192_${JOB}_cpu.txt &
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet44 --data_name=cifar10 --display_every=1 --batch_size=1024 --cross_replica_sync=true --num_batches=322 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id29_cifar10_resnet44_sync_batch8192/id29_cifar10_resnet44_sync_batch8192_${JOB}_log.txt;
+                mkdir -p /result/id23_imagenet_inception3_sync_batch512;
+                echo "id23_imagenet_inception3_sync_batch512" > /tf_cnn_benchmarks/model.txt;
+                top -d 0.1 -b | grep tf_cnn > /result/id23_imagenet_inception3_sync_batch512/id23_imagenet_inception3_sync_batch512_${JOB}_cpu.txt &
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=inception3 --data_name=imagenet --display_every=1 --batch_size=64 --cross_replica_sync=true --num_batches=228 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id23_imagenet_inception3_sync_batch512/id23_imagenet_inception3_sync_batch512_${JOB}_log.txt;
                 ENDTIME=`date "+%H:%M:%S.%N"`;
-                echo "$ENDTIME" > /result/id29_cifar10_resnet44_sync_batch8192/id29_cifar10_resnet44_sync_batch8192_${JOB}_end_time.txt
+                echo "$ENDTIME" > /result/id23_imagenet_inception3_sync_batch512/id23_imagenet_inception3_sync_batch512_${JOB}_end_time.txt
             ports:
             - containerPort: 2222
               name: tfjob-port

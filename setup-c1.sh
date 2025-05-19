@@ -155,6 +155,9 @@ install_nvidia_docker() {
 
 setup_prerequisites() {
     echo "====================> 사전 설정 및 Swap 비활성화 중..."
+    apt-get update
+    apt-get install -y jq
+
     modprobe br_netfilter
 
     cat <<EOF | tee /etc/modules-load.d/k8s.conf
@@ -188,7 +191,7 @@ install_kubernetes() {
     mkdir -m 777 data
     mkdir -m 777 tfjob
 
-    git clone -b k8s https://github.com/hyunnnchoi/Cloud-init.git
+    git clone https://github.com/hyunnnchoi/Cloud-init.git
 
     cd Cloud-init
     chmod -R 777 /home/tensorspot
@@ -419,7 +422,7 @@ pull_docker_images() { # 양 쪽 노드 모두에서 실행
     echo "====================> Docker 이미지 다운로드 중..."
     docker pull potato4332/tf2-cpu-docker:0.5.5x
     docker pull potato4332/tf2-gpu-docker:0.4.5x
-    docker pull potato4332/nlp-keras:0.0.1x
+    docker pull potato4332/nlp-image:0.0.1-beta
 
     echo "Docker 이미지 다운로드 완료"
 }

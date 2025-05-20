@@ -1,0 +1,113 @@
+apiVersion: kubeflow.org/v1
+kind: TFJob
+metadata:
+  name: id2-speech-wav2vec2-sync-batch4
+spec:
+  runPolicy:
+    cleanPodPolicy: None
+  tfReplicaSpecs:
+    CHIEF:
+      replicas: 1
+      template:
+        spec:
+          containers:
+            - name: tensorflow
+              image: your-repo/speech-image:latest
+              imagePullPolicy: IfNotPresent
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  JOB="id2_speech_wav2vec2_sync_batch4";
+                  mkdir -p /result/${JOB};
+                  echo "${JOB}" > /workspace/model.txt;
+                  START=$(date "+%H:%M:%S.%N"); echo "$START" > /result/${JOB}/${JOB}_start_time.txt;
+                  sh /workspace/network.sh & sh /workspace/gpu.sh & 
+                  python /workspace/speech_dist.py --batch_size 4 --num_batches 30;
+                  END=$(date "+%H:%M:%S.%N"); echo "$END" > /result/${JOB}/${JOB}_end_time.txt
+              env:
+                - name: ROOT_DATA_DIR
+                  value: "/data"
+              resources:
+                requests:
+                  cpu: 1
+                  nvidia.com/gpu: 1
+                limits:
+                  cpu: 5
+                  nvidia.com/gpu: 1
+              volumeMounts:
+                - mountPath: /workspace
+                  name: code
+                - mountPath: /result
+                  name: tfjob-data
+                - mountPath: /data
+                  name: tfjob-dataset
+                - mountPath: /dev/shm
+                  name: shmdir
+          volumes:
+            - name: code
+              persistentVolumeClaim:
+                claimName: tfjob-code-volume-claim
+            - name: tfjob-data
+              persistentVolumeClaim:
+                claimName: tfjob-data-volume-claim
+            - name: tfjob-dataset
+              persistentVolumeClaim:
+                claimName: tfjob-nfs-dataset-storage-claim
+            - name: shmdir
+              emptyDir:
+                medium: Memory
+                sizeLimit: "8G"
+          nodeSelector:
+            twonode: worker
+    WORKER:
+      replicas: 1
+      template:
+        spec:
+          containers:
+            - name: tensorflow
+              image: your-repo/speech-image:latest
+              imagePullPolicy: IfNotPresent
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  JOB="id2_speech_wav2vec2_sync_batch4";
+                  mkdir -p /result/${JOB};
+                  echo "${JOB}" > /workspace/model.txt;
+                  START=$(date "+%H:%M:%S.%N"); echo "$START" > /result/${JOB}/${JOB}_start_time.txt;
+                  python /workspace/speech_dist.py --batch_size 4 --num_batches 30;
+                  END=$(date "+%H:%M:%S.%N"); echo "$END" > /result/${JOB}/${JOB}_end_time.txt
+              env:
+                - name: ROOT_DATA_DIR
+                  value: "/data"
+              resources:
+                requests:
+                  cpu: 1
+                  nvidia.com/gpu: 1
+                limits:
+                  cpu: 5
+                  nvidia.com/gpu: 1
+              volumeMounts:
+                - mountPath: /workspace
+                  name: code
+                - mountPath: /result
+                  name: tfjob-data
+                - mountPath: /data
+                  name: tfjob-dataset
+                - mountPath: /dev/shm
+                  name: shmdir
+          volumes:
+            - name: code
+              persistentVolumeClaim:
+                claimName: tfjob-code-volume-claim
+            - name: tfjob-data
+              persistentVolumeClaim:
+                claimName: tfjob-data-volume-claim
+            - name: tfjob-dataset
+              persistentVolumeClaim:
+                claimName: tfjob-nfs-dataset-storage-claim
+            - name: shmdir
+              emptyDir:
+                medium: Memory
+                sizeLimit: "8G"
+          nodeSelector:
+            twonode: worker

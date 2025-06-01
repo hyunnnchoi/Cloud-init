@@ -1,7 +1,7 @@
 apiVersion: kubeflow.org/v1
 kind: "TFJob"
 metadata:
-  name: id2-speech-wav2vec2-sync-batch8
+  name: id1-speech-wav2vec2-sync-batch8
 spec:
   runPolicy:
     cleanPodPolicy: None
@@ -19,11 +19,11 @@ spec:
             args:
               - |
                 JOB=`python /workspace/job_name.py`;
-                mkdir -p /result/id2_speech_wav2vec2_sync_batch8;
-                echo "id2_speech_wav2vec2_sync_batch8" > /workspace/model.txt;
-                STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/id2_speech_wav2vec2_sync_batch8/id2_speech_wav2vec2_sync_batch8_${JOB}_start_time.txt;
-                top -d 0.1 -b | grep python > /result/id2_speech_wav2vec2_sync_batch8/id2_speech_wav2vec2_sync_batch8_${JOB}_cpu.txt & python /workspace/speech_jobs/wav2vec2_dist.py --batch_size 1 --num_batches 50  > /result/id2_speech_wav2vec2_sync_batch8/id2_speech_wav2vec2_sync_batch8_${JOB}_log.txt 2>&1;
-                ENDTIME=`date "+%H:%M:%S.%N"`; echo "$ENDTIME" > /result/id2_speech_wav2vec2_sync_batch8/id2_speech_wav2vec2_sync_batch8_${JOB}_end_time.txt
+                mkdir -p /result/id1_speech_wav2vec2_sync_batch8;
+                echo "id1_speech_wav2vec2_sync_batch8" > /workspace/model.txt;
+                STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/id1_speech_wav2vec2_sync_batch8/id1_speech_wav2vec2_sync_batch8_${JOB}_start_time.txt;
+                top -d 0.1 -b | grep python > /result/id1_speech_wav2vec2_sync_batch8/id1_speech_wav2vec2_sync_batch8_${JOB}_cpu.txt & python /workspace/speech_jobs/wav2vec2_dist.py --batch_size 4 --num_batches 600  > /result/id1_speech_wav2vec2_sync_batch8/id1_speech_wav2vec2_sync_batch8_${JOB}_log.txt 2>&1;
+                ENDTIME=`date "+%H:%M:%S.%N"`; echo "$ENDTIME" > /result/id1_speech_wav2vec2_sync_batch8/id1_speech_wav2vec2_sync_batch8_${JOB}_end_time.txt
             ports:
               - containerPort: 2222
                 name: tfjob-port
@@ -57,7 +57,7 @@ spec:
           nodeSelector:
             twonode: worker
     WORKER:
-      replicas: 7
+      replicas: 1
       template:
         spec:
           containers:
@@ -69,11 +69,11 @@ spec:
             args:
               - |
                 JOB=`python /workspace/job_name.py`;
-                mkdir -p /result/id2_speech_wav2vec2_sync_batch8;
-                echo "id2_speech_wav2vec2_sync_batch8" > /workspace/model.txt;
-                STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/id2_speech_wav2vec2_sync_batch8/id2_speech_wav2vec2_sync_batch8_${JOB}_start_time.txt;
-                top -d 0.1 -b | grep python > /result/id2_speech_wav2vec2_sync_batch8/id2_speech_wav2vec2_sync_batch8_${JOB}_cpu.txt & python /workspace/speech_jobs/wav2vec2_dist.py --batch_size 1 --num_batches 50 > /result/id2_speech_wav2vec2_sync_batch8/id2_speech_wav2vec2_sync_batch8_${JOB}_log.txt 2>&1;
-                ENDTIME=`date "+%H:%M:%S.%N"`; echo "$ENDTIME" > /result/id2_speech_wav2vec2_sync_batch8/id2_speech_wav2vec2_sync_batch8_${JOB}_end_time.txt
+                mkdir -p /result/id1_speech_wav2vec2_sync_batch8;
+                echo "id1_speech_wav2vec2_sync_batch8" > /workspace/model.txt;
+                STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/id1_speech_wav2vec2_sync_batch8/id1_speech_wav2vec2_sync_batch8_${JOB}_start_time.txt;
+                top -d 0.1 -b | grep python > /result/id1_speech_wav2vec2_sync_batch8/id1_speech_wav2vec2_sync_batch8_${JOB}_cpu.txt & python /workspace/speech_jobs/wav2vec2_dist.py --batch_size 4 --num_batches 600 > /result/id1_speech_wav2vec2_sync_batch8/id1_speech_wav2vec2_sync_batch8_${JOB}_log.txt 2>&1;
+                ENDTIME=`date "+%H:%M:%S.%N"`; echo "$ENDTIME" > /result/id1_speech_wav2vec2_sync_batch8/id1_speech_wav2vec2_sync_batch8_${JOB}_end_time.txt
             ports:
               - containerPort: 2222
                 name: tfjob-port

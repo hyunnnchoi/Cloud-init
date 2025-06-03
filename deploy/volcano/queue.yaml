@@ -1,0 +1,12 @@
+apiVersion: scheduling.volcano.sh/v1beta1
+kind: Queue
+metadata:
+  name: tfjobqueue
+spec:
+  weight: 1
+  reclaimable: true 
+  capability:
+    cpu: "1"
+    memory: "4096Mi"
+    #nvidia.com/gpu: 1
+

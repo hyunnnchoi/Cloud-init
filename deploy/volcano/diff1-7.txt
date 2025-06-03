@@ -1,0 +1,82 @@
+4a5,6
+>   labels:
+>     kubernetes.io/metadata.name: volcano-system
+9c11,13
+<   name: volcano-monitoring 
+---
+>   name: volcano-monitoring
+>   labels:
+>     kubernetes.io/metadata.name: volcano-monitoring
+143a148
+>             - --enable-healthz=true
+148c153
+<           image: volcanosh/vc-webhook-manager:v1.7.0
+---
+>           image: volcanosh/vc-webhook-manager:latest
+183c188
+<           image: volcanosh/vc-webhook-manager:v1.7.0
+---
+>           image: volcanosh/vc-webhook-manager:latest
+8563c8568
+<     resources: ["daemonsets", "replicasets", "statefulsets"]
+---
+>     resources: ["daemonsets", "statefulsets"]
+8564a8570,8572
+>   - apiGroups: ["apps"]
+>     resources: ["replicasets"]
+>     verbs: ["get", "list", "watch"]
+8602a8611,8622
+>       tolerations:
+>       - key: "CriticalAddonsOnly"
+>         operator: "Exists"
+>       - key: "node-role.kubernetes.io/master"
+>         operator: "Exists"
+>       affinity:
+>         nodeAffinity:
+>           requiredDuringSchedulingIgnoredDuringExecution:
+>             nodeSelectorTerms:
+>             - matchExpressions:
+>               - key: "node-role.kubernetes.io/master"
+>                 operator: "Exists"
+8605c8625
+<             image: volcanosh/vc-controller-manager:v1.7.0
+---
+>             image: volcanosh/vc-controller-manager:latest
+8608a8629,8630
+>               - --leader-elect=true # hhlee
+>               - --lock-object-namespace=volcano-system # hhlee
+8631c8653
+<       - name: priority
+---
+>     - plugins:
+8634,8636d8655
+<       - name: conformance
+<     - plugins:
+<       - name: overcommit
+8640,8641d8658
+<       - name: proportion
+<       - name: nodeorder
+8682c8699
+<     verbs: ["list", "watch"]
+---
+>     verbs: ["get","list", "watch","update","patch"]
+8763a8781,8792
+>       tolerations:
+>       - key: "CriticalAddonsOnly"
+>         operator: "Exists"
+>       - key: "node-role.kubernetes.io/master"
+>         operator: "Exists"
+>       affinity:
+>         nodeAffinity:
+>           requiredDuringSchedulingIgnoredDuringExecution:
+>             nodeSelectorTerms:
+>             - matchExpressions:
+>               - key: "node-role.kubernetes.io/master"
+>                 operator: "Exists"
+8766c8795
+<           image: volcanosh/vc-scheduler:v1.7.0
+---
+>           image: volcanosh/vc-scheduler:latest
+8771a8801,8802
+>             - --leader-elect=true # hhlee
+>             - --lock-object-namespace=volcano-system # hhlee

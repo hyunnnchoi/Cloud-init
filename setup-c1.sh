@@ -307,7 +307,7 @@ setup_master_node() {
     # Flannel 네트워크 설치
     echo "Flannel 네트워크 설치 중..."
     # root 권한으로 직접 실행
-    kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+    kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/v0.26.7/Documentation/kube-flannel.yml
 
     # 마스터 노드 taint 제거 (모든 노드에서 파드 실행 가능하도록)
     kubectl taint nodes --all node-role.kubernetes.io/master- || true
@@ -344,7 +344,7 @@ setup_worker_node() {
 install_flannel() {
     echo "====================> Flannel 설치 중..."
     # logname 대신 직접 kubectl 사용
-    kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+    kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/v0.26.7/Documentation/kube-flannel.yml
 
     # 노드 상태 확인
     echo -e "\n노드 상태 확인:"

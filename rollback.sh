@@ -8,6 +8,7 @@ echo "롤백 시작 시간: $ROLLBACK_TIME"
 TFPATH="/home/tensorspot/Cloud-init"
 DATAPATH="/home/tensorspot/data"
 SAVEPATH="/home/tensorspot/tfjob"
+PEM_KEY="~/tethys-v/tethys.pem"
 
 echo "1. 마스터 노드 데이터 삭제 중..."
 # 마스터 노드의 데이터 삭제
@@ -22,7 +23,7 @@ NODE_IPS=$(kubectl get nodes -o wide --no-headers | awk '{print $6}')
 # 각 워커 노드에서 데이터 삭제
 for node_ip in $NODE_IPS; do
     echo "워커 노드 $node_ip 데이터 삭제 중..."
-    ssh -o StrictHostKeyChecking=no ubuntu@$node_ip "sudo rm -rf /home/tensorspot/data/* && sudo rm -rf /home/tensorspot/tfjob/*" &
+    ssh -i ${PEM_KEY} -o StrictHostKeyChecking=no ubuntu@$node_ip "sudo rm -rf /home/tensorspot/data/* && sudo rm -rf /home/tensorspot/tfjob/*" &
 done
 
 # 모든 SSH 작업 완료 대기
@@ -33,7 +34,7 @@ echo "3. GPU 측정 스크립트 종료 중..."
 # 모든 노드에서 GPU 스크립트 종료
 for node_ip in $NODE_IPS; do
     echo "노드 $node_ip GPU 스크립트 종료 중..."
-    ssh -o StrictHostKeyChecking=no ubuntu@$node_ip "sudo sh /home/tensorspot/Cloud-init/gpu_off.sh" &
+    ssh -i ${PEM_KEY} -o StrictHostKeyChecking=no ubuntu@$node_ip "sudo sh /home/tensorspot/Cloud-init/gpu_off.sh" &
 done
 
 # 모든 SSH 작업 완료 대기

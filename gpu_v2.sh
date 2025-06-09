@@ -2,7 +2,7 @@
 # gpu_screen_fg.sh
 HOSTNAME=$(hostname)
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-LOG_DIR="/home/tensorspot/tfjob"
+LOG_DIR="/home/tensorspot/logging"
 LOG_FILE="${LOG_DIR}/gpu_${HOSTNAME}.txt"
 BACKUP_DIR="${LOG_DIR}/backups"
 

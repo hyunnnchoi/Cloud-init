@@ -6,13 +6,14 @@ STARTLOGTIME=$(($(date +%s%N)/1000000000))
 TFPATH="/home/tensorspot/Cloud-init"
 # Lambda Labs
 SAVEPATH="/home/tensorspot/tfjob"
+PEM_KEY="/home/ubuntu/tethys-v/tethys.pem"
 sudo rm -rf ${SAVEPATH}/*
 echo "$STARTTIME" > ${SAVEPATH}/start_makespan.txt
 
 # Lambda Labs - 동적으로 노드 IP 가져와서 GPU 스크립트 실행
 NODE_IPS=$(kubectl get nodes -o wide --no-headers | awk '{print $6}')
 for node_ip in $NODE_IPS; do
-    ssh -o StrictHostKeyChecking=no ubuntu@$node_ip "sudo sh /home/tensorspot/Cloud-init/gpu_v2.sh &" &
+    ssh -i ${PEM_KEY} -o StrictHostKeyChecking=no ubuntu@$node_ip "sudo sh /home/tensorspot/Cloud-init/gpu.sh &" &
 done
 
 # 사용 가능한 총 GPU 수 체크하는 함수
@@ -485,5 +486,5 @@ kubectl logs -n kube-system tensorspot-scheduler > ${SAVEPATH}/scheduler_log.txt
 # Lambda Labs - 동적으로 노드 IP 가져와서 GPU off 스크립트 실행
 NODE_IPS=$(kubectl get nodes -o wide --no-headers | awk '{print $6}')
 for node_ip in $NODE_IPS; do
-    ssh -o StrictHostKeyChecking=no ubuntu@$node_ip "sudo sh /home/tensorspot/Cloud-init/gpu_v2_off.sh"
+    ssh -i ${PEM_KEY} -o StrictHostKeyChecking=no ubuntu@$node_ip "sudo sh /home/tensorspot/Cloud-init/gpu_off.sh"
 done

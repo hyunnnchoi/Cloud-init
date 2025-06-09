@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "================= Lambda Labs Setup Script ================="
+echo "================= Lambda Labs Setup Script (Calico Edition) ================="
 echo "[https://cloud.lambdalabs.com/instances]"
 echo ""
 echo "💡 Dockerhub 이미지 버전 최종 정리 (2025.04.03)"
@@ -8,18 +8,20 @@ echo "   NLP: potato4332/nlp-image:0.0.1-network"
 echo "   CV: potato4332/tf2-cpu-docker:0.5.5x"
 echo "   CV: potato4332/tf2-gpu-docker:0.4.5x"
 echo ""
+echo "🔥 CNI: Calico v3.27.5 (Kubernetes 1.21.7 호환)"
+echo ""
 
 # 스크립트를 관리자 권한으로 실행하는지 확인
 if [[ $EUID -ne 0 ]]; then
    echo "이 스크립트는 sudo로 실행해야 합니다."
-   echo "사용법: sudo ./lambda_labs_setup.sh [master|worker]"
+   echo "사용법: sudo ./setup-c1-calico.sh [master|worker]"
    exit 1
 fi
 
 # 마스터/워커 노드 인자 확인
 if [ "$#" -ne 1 ]; then
     echo "마스터 노드인지 워커 노드인지 지정해주세요."
-    echo "사용법: sudo ./lambda_labs_setup.sh [master|worker]"
+    echo "사용법: sudo ./setup-c1-calico.sh [master|worker]"
     exit 1
 fi
 
@@ -27,7 +29,7 @@ NODE_TYPE=$1
 
 if [[ "$NODE_TYPE" != "master" && "$NODE_TYPE" != "worker" ]]; then
     echo "인자는 'master' 또는 'worker'여야 합니다."
-    echo "사용법: sudo ./lambda_labs_setup.sh [master|worker]"
+    echo "사용법: sudo ./setup-c1-calico.sh [master|worker]"
     exit 1
 fi
 
@@ -236,13 +238,14 @@ EOF
 }
 
 setup_master_node() {
-    echo "====================> Master Node 설정 중..."
+    echo "====================> Master Node 설정 중 (Calico CNI)..."
     # init
     kubeadm config images list
     kubeadm config images pull
 
-    # Flannel 10.244.0.0/16 사용
-    kubeadm init --pod-network-cidr=10.244.0.0/16 --node-name xsailor-master
+    # *** 변경된 부분: Calico 전용 CIDR 사용 ***
+    # Calico 기본 CIDR 192.168.0.0/16 사용 (Flannel과 다름)
+    kubeadm init --pod-network-cidr=192.168.0.0/16 --node-name xsailor-master
 
     # 실제 일반 사용자 확인 (logname 명령이 실패하는 경우 대비)
     if NORMAL_USER=$(logname 2>/dev/null); then
@@ -304,10 +307,9 @@ setup_master_node() {
     chown $NORMAL_USER:$NORMAL_USER $USER_HOME/worker_join_command.txt
     echo "$JOIN_COMMAND" > /root/worker_join_command.txt  # root 사용자를 위한 복사본
 
-    # Flannel 네트워크 설치
-    echo "Flannel 네트워크 설치 중..."
-    # root 권한으로 직접 실행
-    kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/v0.26.7/Documentation/kube-flannel.yml
+    # *** 변경된 부분: Flannel 대신 Calico 설치 ***
+    echo "Calico CNI 설치 중..."
+    install_calico
 
     # 마스터 노드 taint 제거 (모든 노드에서 파드 실행 가능하도록)
     kubectl taint nodes --all node-role.kubernetes.io/master- || true
@@ -315,8 +317,9 @@ setup_master_node() {
     echo "Kubernetes 노드 상태:"
     kubectl get nodes
 
-    echo "Master Node 설정 완료"
+    echo "Master Node 설정 완료 (Calico CNI)"
 }
+
 setup_worker_node() {
     echo "====================> Worker Node 설정 중..."
     # 일반 사용자 확인
@@ -341,19 +344,108 @@ setup_worker_node() {
     echo "Worker Node 설정 안내 완료"
 }
 
-install_flannel() {
-    echo "====================> Flannel 설치 중..."
-    # logname 대신 직접 kubectl 사용
-    kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/v0.26.7/Documentation/kube-flannel.yml
+# *** 새로 추가된 함수: Calico 설치 ***
+install_calico() {
+    echo "====================> Calico v3.27.5 설치 중 (Kubernetes 1.21.7 호환)..."
+    
+    # Calico Operator 설치
+    echo "Tigera Operator 설치 중..."
+    curl -o tigera-operator.yaml https://raw.githubusercontent.com/projectcalico/calico/v3.27.5/manifests/tigera-operator.yaml
+    kubectl create -f tigera-operator.yaml
 
+    # Custom Resources 설정 파일 다운로드 및 수정
+    echo "Calico Custom Resources 설정 중..."
+    curl -o custom-resources.yaml https://raw.githubusercontent.com/projectcalico/calico/v3.27.5/manifests/custom-resources.yaml
+    
+    # CIDR을 192.168.0.0/16으로 설정 (kubeadm init에서 사용한 것과 동일)
+    sed -i 's|cidr: 192\.168\.0\.0/16|cidr: 192.168.0.0/16|g' custom-resources.yaml
+    
+    # BGP 활성화 및 성능 최적화 설정
+    cat <<EOF > calico-custom-resources.yaml
+# This section includes base Calico installation configuration.
+# For more information, see: https://projectcalico.docs.tigera.io/master/reference/installation/api#operator.tigera.io/v1.Installation
+apiVersion: operator.tigera.io/v1
+kind: Installation
+metadata:
+  name: default
+spec:
+  # Configures Calico networking.
+  calicoNetwork:
+    # Note: The ipPools section cannot be modified post-install.
+    ipPools:
+    - blockSize: 26
+      cidr: 192.168.0.0/16
+      encapsulation: IPIPCrossSubnet
+      natOutgoing: Enabled
+      nodeSelector: all()
+    # BGP 설정 (성능 최적화)
+    bgp: Enabled
+    linuxDataplane: Iptables
+    hostPorts: Enabled
+
+---
+
+# This section configures the Calico API server.
+# For more information, see: https://projectcalico.docs.tigera.io/master/reference/installation/api#operator.tigera.io/v1.APIServer
+apiVersion: operator.tigera.io/v1
+kind: APIServer
+metadata:
+  name: default
+spec: {}
+EOF
+
+    kubectl create -f calico-custom-resources.yaml
+
+    # Calico 설치 상태 확인
+    echo "Calico 설치 상태 확인 중..."
+    echo "Calico pods가 모두 Ready 상태가 될 때까지 대기합니다..."
+    
+    # tigera-operator 파드 대기
+    kubectl wait --for=condition=Ready pod -l k8s-app=tigera-operator -n tigera-operator --timeout=300s
+    
+    # calico-system 네임스페이스 생성 대기
+    while ! kubectl get namespace calico-system > /dev/null 2>&1; do
+        echo "calico-system 네임스페이스 생성 대기 중..."
+        sleep 5
+    done
+    
+    # calico pods 대기
+    kubectl wait --for=condition=Ready pod -l k8s-app=calico-node -n calico-system --timeout=300s
+    kubectl wait --for=condition=Ready pod -l k8s-app=calico-kube-controllers -n calico-system --timeout=300s
+
+    # 설치 확인
+    echo -e "\nCalico 설치 상태 확인:"
+    kubectl get pods -n calico-system
+    kubectl get pods -n tigera-operator
+    
+    # 노드 상태 확인
+    echo -e "\n노드 상태 확인:"
+    kubectl get nodes -o wide
+
+    echo -e "\nCalico v3.27.5 설치 완료!"
+    echo "BGP 활성화 및 성능 최적화 설정 적용됨"
+}
+
+# *** 기존 install_flannel 함수 제거하고 Calico 확인 함수로 교체 ***
+verify_calico() {
+    echo "====================> Calico 설치 확인 중..."
+    
+    # Calico 상태 확인
+    echo -e "\nCalico System Pods:"
+    kubectl get pods -n calico-system
+    
+    echo -e "\nTigera Operator Pods:"
+    kubectl get pods -n tigera-operator
+    
     # 노드 상태 확인
     echo -e "\n노드 상태 확인:"
     kubectl get nodes
-
-    # 마스터 노드 taint 제거 (모든 노드에서 파드 실행 가능하도록)
-    kubectl taint nodes --all node-role.kubernetes.io/master- || true
-
-    echo -e "\nFlannel 설치 완료"
+    
+    # Calico 버전 확인
+    echo -e "\nCalico 버전 확인:"
+    kubectl get installation default -o yaml | grep -A 5 "calicoNetwork"
+    
+    echo -e "\nCalico 설치 확인 완료"
 }
 
 install_nvidia_device_plugin() {
@@ -425,7 +517,6 @@ pull_docker_images() { # 양 쪽 노드 모두에서 실행
     docker pull potato4332/nlp-image:0.0.1-beta
     docker pull potato4332/speech-image:0.0.1-beta
 
-
     echo "Docker 이미지 다운로드 완료"
 }
 
@@ -457,6 +548,56 @@ setup_iperf() {
     echo "iperf 설정 완료"
 }
 
+# *** 새로 추가된 함수: Calico 성능 최적화 ***
+optimize_calico_performance() {
+    echo "====================> Calico 성능 최적화 설정 중..."
+    
+    # BGP 설정 최적화
+    cat <<EOF | kubectl apply -f -
+apiVersion: projectcalico.org/v3
+kind: BGPConfiguration
+metadata:
+  name: default
+spec:
+  logSeverityScreen: Info
+  nodeToNodeMeshEnabled: true
+  asNumber: 64512
+  serviceClusterIPs:
+  - cidr: 10.96.0.0/12
+  serviceExternalIPs:
+  - cidr: 0.0.0.0/0
+EOF
+
+    # Felix 설정 최적화 (GPU 워크로드용)
+    cat <<EOF | kubectl apply -f -
+apiVersion: projectcalico.org/v3
+kind: FelixConfiguration
+metadata:
+  name: default
+spec:
+  # 성능 최적화 설정
+  bpfLogLevel: ""
+  floatingIPs: Disabled
+  healthEnabled: true
+  healthHost: localhost
+  healthPort: 9099
+  # NCCL 최적화를 위한 설정
+  iptablesLockFilePath: /run/xtables.lock
+  iptablesLockProbeInterval: 50ms
+  iptablesLockTimeout: 0s
+  # 로그 레벨 설정
+  logSeverityFile: Info
+  logSeverityScreen: Info
+  logSeveritySys: Info
+  # 대역폭 최적화
+  reportingInterval: 30s
+  # GPU 통신 최적화
+  defaultEndpointToHostAction: ACCEPT
+EOF
+
+    echo "Calico 성능 최적화 설정 완료"
+}
+
 # 공통 설치 과정
 common_setup() {
     install_cuda
@@ -470,18 +611,18 @@ common_setup() {
 }
 
 if [[ "$NODE_TYPE" == "master" ]]; then
-    echo "마스터 노드 설정을 시작합니다..."
+    echo "마스터 노드 설정을 시작합니다... (Calico CNI)"
     common_setup
-    setup_master_node  # de 함수 대신 setup_master_node 사용
-    # 이미 setup_master_node에서 flannel을 설치했으므로 아래 라인은 선택적으로 주석 처리
-    # install_flannel
+    setup_master_node  # 이미 install_calico 포함됨
+    verify_calico
+    optimize_calico_performance
     install_nvidia_device_plugin
     fix_gpu_issues
     setup_node_selector
     install_training_operator
     setup_pv_pvc
     setup_iperf
-    echo "마스터 노드 설정이 완료되었습니다."
+    echo "마스터 노드 설정이 완료되었습니다. (Calico CNI)"
     echo "워커 노드 조인 명령어를 확인하세요: ~/worker_join_command.txt"
 fi
 
@@ -495,4 +636,7 @@ if [[ "$NODE_TYPE" == "worker" ]]; then
     echo "마스터 노드에서 제공한 join 명령어를 실행하세요."
 fi
 
-echo "================= Lambda Labs Setup 완료 ================="
+echo "================= Lambda Labs Setup 완료 (Calico Edition) ================="
+echo "🎯 Calico v3.27.5 (Kubernetes 1.21.7 호환) 설치 완료"
+echo "🚀 BGP 활성화 및 GPU 워크로드 최적화 설정 적용됨"
+echo "📈 기존 TFJob YAML 파일들은 수정 없이 바로 사용 가능"

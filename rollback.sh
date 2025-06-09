@@ -8,7 +8,7 @@ echo "롤백 시작 시간: $ROLLBACK_TIME"
 TFPATH="/home/tensorspot/Cloud-init"
 DATAPATH="/home/tensorspot/data"
 SAVEPATH="/home/tensorspot/tfjob"
-PEM_KEY="~/tethys-v/tethys.pem"
+PEM_KEY="/home/ubuntu/tethys-v/tethys.pem"
 
 echo "1. 마스터 노드 데이터 삭제 중..."
 # 마스터 노드의 데이터 삭제

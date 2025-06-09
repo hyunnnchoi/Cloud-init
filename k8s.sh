@@ -4,15 +4,16 @@ STARTTIME=`date "+%H:%M:%S.%N"`
 STARTEPOCH=`date +%s`  # 스크립트 시작 시간 (epoch 초)
 STARTLOGTIME=$(($(date +%s%N)/1000000000))
 TFPATH="/home/tensorspot/Cloud-init"
-# GCP
+# Lambda Labs
 SAVEPATH="/home/tensorspot/tfjob"
 sudo rm -rf ${SAVEPATH}/*
 echo "$STARTTIME" > ${SAVEPATH}/start_makespan.txt
-# GCP
 
-# gcloud compute ssh --zone us-central1-a xsailor-master --command "sudo sh /home/jhlee21/gpu.sh &" &
-
-# gcloud compute ssh --zone us-central1-a xsailor-worker1 --command "sudo sh /home/jhlee21/gpu.sh &" &
+# Lambda Labs - 동적으로 노드 IP 가져와서 GPU 스크립트 실행
+NODE_IPS=$(kubectl get nodes -o wide --no-headers | awk '{print $6}')
+for node_ip in $NODE_IPS; do
+    ssh -o StrictHostKeyChecking=no ubuntu@$node_ip "sudo sh /home/tensorspot/Cloud-init/gpu_v2.sh &" &
+done
 
 # 사용 가능한 총 GPU 수 체크하는 함수
 total_gpu_num=$(kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu" | grep -v NAME | awk '{if ($2 ~ /^[0-9]+$/) sum += $2} END {print sum}')
@@ -97,6 +98,7 @@ wait_for_resources_or_arrival() {
     SCHEDULER="$4"
 
     echo "Checking resources for job ${JOB_NAME} (arrival time: ${ARRIVAL_TIME}s, workers: $WORKER_NUM)"
+    echo $ARRIVAL_TIME > ${SAVEPATH}/${JOB_NAME}_arrival_timestamp.txt # hhlee
 
     while true; do
         # arrival time 체크
@@ -171,6 +173,11 @@ wait_for_resources_or_arrival() {
             # 대기 중인 포드가 없으면 (이전 작업들이 모두 자원 할당 받은 상태) 즉시 작업 시작
             if [ $PENDING_PODS -eq 0 ]; then
                 echo "Arrival time reached and no pending pods. Starting job ${JOB_NAME} now."
+                # hhlee -- start
+                CURRENT_EPOCH=$(date +%s)
+                TIME_PASSED=$((CURRENT_EPOCH - STARTEPOCH))
+                echo $TIME_PASSED > ${SAVEPATH}/${JOB_NAME}_queuehead_timestamp.txt
+                # hhlee -- end
                 return 0
             else
                 # 대기 중인 포드가 있으면 완료된 작업 확인 및 정리
@@ -475,6 +482,8 @@ kubectl logs -n kube-system kube-scheduler-xsailor-master > ${SAVEPATH}/schedule
 
 kubectl logs -n kube-system --since $(($LOGTIME+5))s kube-scheduler-xsailor-master > ${SAVEPATH}/scheduler_log.txt
 
-# gcloud compute ssh --zone us-central1-a xsailor-master --command "sudo sh /home/jhlee21/gpu_off.sh"
-
-# gcloud compute ssh --zone us-central1-a xsailor-worker1 --command "sudo sh /home/jhlee21/gpu_off.sh"
+# Lambda Labs - 동적으로 노드 IP 가져와서 GPU off 스크립트 실행
+NODE_IPS=$(kubectl get nodes -o wide --no-headers | awk '{print $6}')
+for node_ip in $NODE_IPS; do
+    ssh -o StrictHostKeyChecking=no ubuntu@$node_ip "sudo sh /home/tensorspot/Cloud-init/gpu_v2_off.sh"
+done

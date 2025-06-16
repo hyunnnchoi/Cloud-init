@@ -478,10 +478,18 @@ ENDLOGTIME=$(($(date +%s%N)/1000000000))
 LOGTIME=$(($ENDLOGTIME - $STARTLOGTIME))
 
 # 스케줄러 전체 로그
+ENDTIME=`date "+%H:%M:%S.%N"`
+echo "$ENDTIME" > ${SAVEPATH}/end_makespan.txt
+ENDLOGTIME=$(($(date +%s%N)/1000000000))
+LOGTIME=$(($ENDLOGTIME - $STARTLOGTIME))
+
+# 스케줄러 전체 로그
 kubectl logs -n kube-system kube-scheduler-xsailor-master > ${SAVEPATH}/scheduler_full_log.txt
 
 kubectl logs -n kube-system tensorspot-scheduler > ${SAVEPATH}/scheduler_log.txt
 
-# gcloud compute ssh --zone us-central1-a xsailor-master --command "sudo sh /home/jhlee21/gpu_off.sh"
-
-# gcloud compute ssh --zone us-central1-a xsailor-worker1 --command "sudo sh /home/jhlee21/gpu_off.sh"
+# Lambda Labs - 동적으로 노드 IP 가져와서 GPU off 스크립트 실행
+NODE_IPS=$(kubectl get nodes -o wide --no-headers | awk '{print $6}')
+for node_ip in $NODE_IPS; do
+    ssh -i ${PEM_KEY} -o StrictHostKeyChecking=no ubuntu@$node_ip "sudo sh /home/tensorspot/Cloud-init/gpu_off.sh"
+done

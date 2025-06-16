@@ -1,5 +1,3 @@
-
-
 #!/bin/bash
 STARTTIME=`date "+%H:%M:%S.%N"`
 STARTEPOCH=`date +%s`  # 스크립트 시작 시간 (epoch 초)

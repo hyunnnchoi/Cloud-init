@@ -1,18 +1,19 @@
-
 #!/bin/bash
 STARTTIME=`date "+%H:%M:%S.%N"`
 STARTEPOCH=`date +%s`  # 스크립트 시작 시간 (epoch 초)
 STARTLOGTIME=$(($(date +%s%N)/1000000000))
 TFPATH="/home/tensorspot/Cloud-init"
-# GCP
+# Lambda Labs
 SAVEPATH="/home/tensorspot/tfjob"
+PEM_KEY="/home/ubuntu/tethys-v/tethys.pem"
 sudo rm -rf ${SAVEPATH}/*
 echo "$STARTTIME" > ${SAVEPATH}/start_makespan.txt
-# GCP
 
-# gcloud compute ssh --zone us-central1-a xsailor-master --command "sudo sh /home/jhlee21/gpu.sh &" &
-
-# gcloud compute ssh --zone us-central1-a xsailor-worker1 --command "sudo sh /home/jhlee21/gpu.sh &" &
+# Lambda Labs - 동적으로 노드 IP 가져와서 GPU 스크립트 실행
+NODE_IPS=$(kubectl get nodes -o wide --no-headers | awk '{print $6}')
+for node_ip in $NODE_IPS; do
+    ssh -i ${PEM_KEY} -o StrictHostKeyChecking=no ubuntu@$node_ip "sudo sh /home/tensorspot/Cloud-init/gpu.sh &" &
+done
 
 # 사용 가능한 총 GPU 수 체크하는 함수
 total_gpu_num=$(kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu" | grep -v NAME | awk '{if ($2 ~ /^[0-9]+$/) sum += $2} END {print sum}')
@@ -477,10 +478,18 @@ ENDLOGTIME=$(($(date +%s%N)/1000000000))
 LOGTIME=$(($ENDLOGTIME - $STARTLOGTIME))
 
 # 스케줄러 전체 로그
+ENDTIME=`date "+%H:%M:%S.%N"`
+echo "$ENDTIME" > ${SAVEPATH}/end_makespan.txt
+ENDLOGTIME=$(($(date +%s%N)/1000000000))
+LOGTIME=$(($ENDLOGTIME - $STARTLOGTIME))
+
+# 스케줄러 전체 로그
 kubectl logs -n kube-system kube-scheduler-xsailor-master > ${SAVEPATH}/scheduler_full_log.txt
 
 kubectl logs -n kube-system tensorspot-scheduler > ${SAVEPATH}/scheduler_log.txt
 
-# gcloud compute ssh --zone us-central1-a xsailor-master --command "sudo sh /home/jhlee21/gpu_off.sh"
-
-# gcloud compute ssh --zone us-central1-a xsailor-worker1 --command "sudo sh /home/jhlee21/gpu_off.sh"
+# Lambda Labs - 동적으로 노드 IP 가져와서 GPU off 스크립트 실행
+NODE_IPS=$(kubectl get nodes -o wide --no-headers | awk '{print $6}')
+for node_ip in $NODE_IPS; do
+    ssh -i ${PEM_KEY} -o StrictHostKeyChecking=no ubuntu@$node_ip "sudo sh /home/tensorspot/Cloud-init/gpu_off.sh"
+done

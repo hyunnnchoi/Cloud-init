@@ -28,7 +28,7 @@ for job_file in "${JOB_FILES[@]}"; do
             kubectl delete -f "${job_file}"
             # 다음 Job 실행 전 30초 대기
             echo "Waiting 30 seconds before next job..."
-            sleep 30
+            sleep 60
             break
         fi
         # 대기

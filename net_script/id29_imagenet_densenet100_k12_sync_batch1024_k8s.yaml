@@ -1,7 +1,7 @@
 apiVersion: kubeflow.org/v1
 kind: "TFJob"
 metadata:
-  name: id29-imagenet-densenet100_k12-sync-batch1024
+  name: id29-imagenet-densenet100-k12-sync-batch1024
 spec:
   runPolicy:
     cleanPodPolicy: None

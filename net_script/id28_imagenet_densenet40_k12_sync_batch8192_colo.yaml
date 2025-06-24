@@ -36,7 +36,7 @@ spec:
                 STARTTIME=`date "+%H:%M:%S.%N"`;
                 echo "$STARTTIME" > /result/id28_imagenet_densenet40_k12_sync_batch8192/id28_imagenet_densenet40_k12_sync_batch8192_${JOB}_start_time.txt;
 
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=densenet40_k12 --data_name=imagenet --display_every=1 --batch_size=8192 --cross_replica_sync=true --num_batches=314 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id28_imagenet_densenet40_k12_sync_batch8192/id28_imagenet_densenet40_k12_sync_batch8192_${JOB}_log.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=densenet40_k12 --data_name=imagenet --display_every=1 --batch_size=1024 --cross_replica_sync=true --num_batches=314 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id28_imagenet_densenet40_k12_sync_batch8192/id28_imagenet_densenet40_k12_sync_batch8192_${JOB}_log.txt;
 
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id28_imagenet_densenet40_k12_sync_batch8192/id28_imagenet_densenet40_k12_sync_batch8192_${JOB}_end_time.txt
@@ -93,7 +93,7 @@ spec:
                 mkdir -p /result/id28_imagenet_densenet40_k12_sync_batch8192;
                 echo "id28_imagenet_densenet40_k12_sync_batch8192" > /tf_cnn_benchmarks/model.txt;
                 top -d 0.1 -b | grep tf_cnn > /result/id28_imagenet_densenet40_k12_sync_batch8192/id28_imagenet_densenet40_k12_sync_batch8192_${JOB}_cpu.txt &
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=densenet40_k12 --data_name=imagenet --display_every=1 --batch_size=8192 --cross_replica_sync=true --num_batches=314 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id28_imagenet_densenet40_k12_sync_batch8192/id28_imagenet_densenet40_k12_sync_batch8192_${JOB}_log.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=densenet40_k12 --data_name=imagenet --display_every=1 --batch_size=1024 --cross_replica_sync=true --num_batches=314 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id28_imagenet_densenet40_k12_sync_batch8192/id28_imagenet_densenet40_k12_sync_batch8192_${JOB}_log.txt;
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id28_imagenet_densenet40_k12_sync_batch8192/id28_imagenet_densenet40_k12_sync_batch8192_${JOB}_end_time.txt
             ports:

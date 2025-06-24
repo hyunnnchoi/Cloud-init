@@ -35,7 +35,7 @@ spec:
                 echo "id26_speech_whisper_sync_batch32" > /workspace/model.txt;
                 STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/id26_speech_whisper_sync_batch32/id26_speech_whisper_sync_batch32_${JOB}_start_time.txt;
                 top -d 0.1 -b | grep python > /result/id26_speech_whisper_sync_batch32/id26_speech_whisper_sync_batch32_${JOB}_cpu.txt &
-                python /workspace/speech_jobs/whisper_dist.py --batch_size 32 --num_batches 90  > /result/id26_speech_whisper_sync_batch32/id26_speech_whisper_sync_batch32_${JOB}_log.txt 2>&1;
+                python /workspace/speech_jobs/whisper_dist.py --batch_size 4 --num_batches 90  > /result/id26_speech_whisper_sync_batch32/id26_speech_whisper_sync_batch32_${JOB}_log.txt 2>&1;
                 ENDTIME=`date "+%H:%M:%S.%N"`; echo "$ENDTIME" > /result/id26_speech_whisper_sync_batch32/id26_speech_whisper_sync_batch32_${JOB}_end_time.txt
             ports:
               - containerPort: 2222
@@ -101,7 +101,7 @@ spec:
                 echo "id26_speech_whisper_sync_batch32" > /workspace/model.txt;
                 STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/id26_speech_whisper_sync_batch32/id26_speech_whisper_sync_batch32_${JOB}_start_time.txt;
                 top -d 0.1 -b | grep python > /result/id26_speech_whisper_sync_batch32/id26_speech_whisper_sync_batch32_${JOB}_cpu.txt &
-                python /workspace/speech_jobs/whisper_dist.py --batch_size 32 --num_batches 90 > /result/id26_speech_whisper_sync_batch32/id26_speech_whisper_sync_batch32_${JOB}_log.txt 2>&1;
+                python /workspace/speech_jobs/whisper_dist.py --batch_size 4 --num_batches 90 > /result/id26_speech_whisper_sync_batch32/id26_speech_whisper_sync_batch32_${JOB}_log.txt 2>&1;
                 ENDTIME=`date "+%H:%M:%S.%N"`; echo "$ENDTIME" > /result/id26_speech_whisper_sync_batch32/id26_speech_whisper_sync_batch32_${JOB}_end_time.txt
             ports:
               - containerPort: 2222

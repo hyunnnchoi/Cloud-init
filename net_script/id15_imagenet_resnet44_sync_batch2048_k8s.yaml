@@ -26,7 +26,7 @@ spec:
                 STARTTIME=`date "+%H:%M:%S.%N"`;
                 echo "$STARTTIME" > /result/id15_imagenet_resnet44_sync_batch2048/id15_imagenet_resnet44_sync_batch2048_${JOB}_start_time.txt;
 
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet44 --data_name=imagenet --display_every=1 --batch_size=2048 --cross_replica_sync=true --num_batches=1320 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id15_imagenet_resnet44_sync_batch2048/id15_imagenet_resnet44_sync_batch2048_${JOB}_log.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet44 --data_name=imagenet --display_every=1 --batch_size=1024 --cross_replica_sync=true --num_batches=1320 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id15_imagenet_resnet44_sync_batch2048/id15_imagenet_resnet44_sync_batch2048_${JOB}_log.txt;
 
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id15_imagenet_resnet44_sync_batch2048/id15_imagenet_resnet44_sync_batch2048_${JOB}_end_time.txt
@@ -74,7 +74,7 @@ spec:
                 mkdir -p /result/id15_imagenet_resnet44_sync_batch2048;
                 echo "id15_imagenet_resnet44_sync_batch2048" > /tf_cnn_benchmarks/model.txt;
                 top -d 0.1 -b | grep tf_cnn > /result/id15_imagenet_resnet44_sync_batch2048/id15_imagenet_resnet44_sync_batch2048_${JOB}_cpu.txt &
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet44 --data_name=imagenet --display_every=1 --batch_size=2048 --cross_replica_sync=true --num_batches=1320 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id15_imagenet_resnet44_sync_batch2048/id15_imagenet_resnet44_sync_batch2048_${JOB}_log.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet44 --data_name=imagenet --display_every=1 --batch_size=1024 --cross_replica_sync=true --num_batches=1320 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id15_imagenet_resnet44_sync_batch2048/id15_imagenet_resnet44_sync_batch2048_${JOB}_log.txt;
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id15_imagenet_resnet44_sync_batch2048/id15_imagenet_resnet44_sync_batch2048_${JOB}_end_time.txt
             ports:

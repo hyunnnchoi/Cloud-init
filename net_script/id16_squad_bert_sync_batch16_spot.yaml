@@ -35,7 +35,7 @@ spec:
                 echo "id16_squad_bert_sync_batch16" > /workspace/model.txt;
                 STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/id16_squad_bert_sync_batch16/id16_squad_bert_sync_batch16_${JOB}_start_time.txt;
                 top -d 0.1 -b | grep python > /result/id16_squad_bert_sync_batch16/id16_squad_bert_sync_batch16_${JOB}_cpu.txt &
-                python /workspace/nlp_jobs/bert_dist_squad.py --batch_size 16 --num_batches 1052  > /result/id16_squad_bert_sync_batch16/id16_squad_bert_sync_batch16_${JOB}_log.txt 2>&1;
+                python /workspace/nlp_jobs/bert_dist_squad.py --batch_size 4 --num_batches 1052  > /result/id16_squad_bert_sync_batch16/id16_squad_bert_sync_batch16_${JOB}_log.txt 2>&1;
                 ENDTIME=`date "+%H:%M:%S.%N"`; echo "$ENDTIME" > /result/id16_squad_bert_sync_batch16/id16_squad_bert_sync_batch16_${JOB}_end_time.txt
             ports:
               - containerPort: 2222
@@ -101,7 +101,7 @@ spec:
                 echo "id16_squad_bert_sync_batch16" > /workspace/model.txt;
                 STARTTIME=`date "+%H:%M:%S.%N"`; echo "$STARTTIME" > /result/id16_squad_bert_sync_batch16/id16_squad_bert_sync_batch16_${JOB}_start_time.txt;
                 top -d 0.1 -b | grep python > /result/id16_squad_bert_sync_batch16/id16_squad_bert_sync_batch16_${JOB}_cpu.txt &
-                python /workspace/nlp_jobs/bert_dist_squad.py --batch_size 16 --num_batches 1052 > /result/id16_squad_bert_sync_batch16/id16_squad_bert_sync_batch16_${JOB}_log.txt 2>&1;
+                python /workspace/nlp_jobs/bert_dist_squad.py --batch_size 4 --num_batches 1052 > /result/id16_squad_bert_sync_batch16/id16_squad_bert_sync_batch16_${JOB}_log.txt 2>&1;
                 ENDTIME=`date "+%H:%M:%S.%N"`; echo "$ENDTIME" > /result/id16_squad_bert_sync_batch16/id16_squad_bert_sync_batch16_${JOB}_end_time.txt
             ports:
               - containerPort: 2222

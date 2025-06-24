@@ -26,7 +26,7 @@ spec:
                 STARTTIME=`date "+%H:%M:%S.%N"`;
                 echo "$STARTTIME" > /result/id6_imagenet_inception3_sync_batch256/id6_imagenet_inception3_sync_batch256_${JOB}_start_time.txt;
 
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=inception3 --data_name=imagenet --display_every=1 --batch_size=256 --cross_replica_sync=true --num_batches=7489 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id6_imagenet_inception3_sync_batch256/id6_imagenet_inception3_sync_batch256_${JOB}_log.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=inception3 --data_name=imagenet --display_every=1 --batch_size=64 --cross_replica_sync=true --num_batches=7489 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id6_imagenet_inception3_sync_batch256/id6_imagenet_inception3_sync_batch256_${JOB}_log.txt;
 
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id6_imagenet_inception3_sync_batch256/id6_imagenet_inception3_sync_batch256_${JOB}_end_time.txt
@@ -74,7 +74,7 @@ spec:
                 mkdir -p /result/id6_imagenet_inception3_sync_batch256;
                 echo "id6_imagenet_inception3_sync_batch256" > /tf_cnn_benchmarks/model.txt;
                 top -d 0.1 -b | grep tf_cnn > /result/id6_imagenet_inception3_sync_batch256/id6_imagenet_inception3_sync_batch256_${JOB}_cpu.txt &
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=inception3 --data_name=imagenet --display_every=1 --batch_size=256 --cross_replica_sync=true --num_batches=7489 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id6_imagenet_inception3_sync_batch256/id6_imagenet_inception3_sync_batch256_${JOB}_log.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=inception3 --data_name=imagenet --display_every=1 --batch_size=64 --cross_replica_sync=true --num_batches=7489 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id6_imagenet_inception3_sync_batch256/id6_imagenet_inception3_sync_batch256_${JOB}_log.txt;
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id6_imagenet_inception3_sync_batch256/id6_imagenet_inception3_sync_batch256_${JOB}_end_time.txt
             ports:

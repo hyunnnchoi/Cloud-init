@@ -26,7 +26,7 @@ spec:
                 STARTTIME=`date "+%H:%M:%S.%N"`;
                 echo "$STARTTIME" > /result/id23_imagenet_resnet110_sync_batch4096/id23_imagenet_resnet110_sync_batch4096_${JOB}_start_time.txt;
 
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet110 --data_name=imagenet --display_every=1 --batch_size=4096 --cross_replica_sync=true --num_batches=92 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id23_imagenet_resnet110_sync_batch4096/id23_imagenet_resnet110_sync_batch4096_${JOB}_log.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet110 --data_name=imagenet --display_every=1 --batch_size=1024 --cross_replica_sync=true --num_batches=92 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id23_imagenet_resnet110_sync_batch4096/id23_imagenet_resnet110_sync_batch4096_${JOB}_log.txt;
 
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id23_imagenet_resnet110_sync_batch4096/id23_imagenet_resnet110_sync_batch4096_${JOB}_end_time.txt
@@ -74,7 +74,7 @@ spec:
                 mkdir -p /result/id23_imagenet_resnet110_sync_batch4096;
                 echo "id23_imagenet_resnet110_sync_batch4096" > /tf_cnn_benchmarks/model.txt;
                 top -d 0.1 -b | grep tf_cnn > /result/id23_imagenet_resnet110_sync_batch4096/id23_imagenet_resnet110_sync_batch4096_${JOB}_cpu.txt &
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet110 --data_name=imagenet --display_every=1 --batch_size=4096 --cross_replica_sync=true --num_batches=92 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id23_imagenet_resnet110_sync_batch4096/id23_imagenet_resnet110_sync_batch4096_${JOB}_log.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet110 --data_name=imagenet --display_every=1 --batch_size=1024 --cross_replica_sync=true --num_batches=92 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id23_imagenet_resnet110_sync_batch4096/id23_imagenet_resnet110_sync_batch4096_${JOB}_log.txt;
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id23_imagenet_resnet110_sync_batch4096/id23_imagenet_resnet110_sync_batch4096_${JOB}_end_time.txt
             ports:

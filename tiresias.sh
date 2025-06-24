@@ -62,7 +62,7 @@ wait_for_pod_scheduling() {
     while [ $SCHEDULED_PODS -lt $WORKER_COUNT ]
     do
         # 현재 이 작업의 Running 상태이거나 ContainerCreating 상태인 포드 수 계산
-        SCHEDULED_PODS=$(kubectl get pods -l job-name=$JOB_NAME -o jsonpath='{range .items[*]}{.status.phase}{"\n"}{end}' | grep -E "(Running|ContainerCreating|Completed)" | wc -l)
+        SCHEDULED_PODS=$(kubectl get pods | grep $JOB_NAME_DASH | grep -E "(Running|ContainerCreating|Completed)" | wc -l)
 
         # 현재 시간 체크
         CURRENT_TIME=$(date +%s)
@@ -82,7 +82,7 @@ wait_for_pod_scheduling() {
             echo "All pods for $JOB_NAME have been scheduled to nodes"
             kubectl get pods -o wide | grep $JOB_NAME_DASH
             echo "Node allocation for $JOB_NAME:" > ${SAVEPATH}/${JOB_NAME}_node_allocation.txt
-            kubectl get pods -o jsonpath='{range .items[?(@.metadata.name=~"'$JOB_NAME_DASH'")]}{.metadata.name}{"\t"}{.spec.nodeName}{"\n"}{end}' >> ${SAVEPATH}/${JOB_NAME}_node_allocation.txt
+            kubectl get pods -o wide | grep $JOB_NAME_DASH | awk '{print $1 "\t" $7}' >> ${SAVEPATH}/${JOB_NAME}_node_allocation.txt
             # TODO(hhlee): node_allocation.txt 제대로 찍히는지 확인필요
 
             # 각 포드의 생성 시간 기록

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 기본 대역폭 값 설정
-BANDWIDTH="4000"
+BANDWIDTH="3000"
 
 # 사용법 함수
 usage() {

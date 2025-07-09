@@ -19,6 +19,7 @@ spec:
             "tensorspot/gpu_request": "1.0"
             "tensorspot/gpu_mem": "17179869184"
             "tensorspot/placement_policy": "tiresias"
+            "tensorspot/skewness_level": "2.4"
 
         spec:
           containers:
@@ -81,6 +82,7 @@ spec:
             "tensorspot/num_worker": "8"
             "tensorspot/net_request": "119"
             "tensorspot/placement_policy": "tiresias"
+            "tensorspot/skewness_level": "2.4"
 
         spec:
           containers:

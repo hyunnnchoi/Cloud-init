@@ -56,7 +56,7 @@ wait_for_pod_scheduling() {
 
     # 모든 워커/치프 포드가 노드에 할당될 때까지 대기
     SCHEDULED_PODS=0
-    TIMEOUT=259200  # 3일 타임아웃
+    TIMEOUT=259200  
     START_TIME=$(date +%s)
 
     while [ $SCHEDULED_PODS -lt $WORKER_COUNT ]

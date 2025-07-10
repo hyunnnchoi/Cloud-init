@@ -1,6 +1,6 @@
 """
 This script converts network packet capture files (.pcap) to CSV format.
-Fixed version to handle IP addresses in filenames correctly.
+Memory-optimized version with dynamic process allocation based on file sizes.
 """
 
 import os
@@ -10,6 +10,55 @@ from functools import partial
 import subprocess
 import glob
 import re
+import gc
+from collections import defaultdict
+
+def get_file_size_gb(filepath):
+    """Get file size in GB"""
+    try:
+        size_bytes = os.path.getsize(filepath)
+        return size_bytes / (1024**3)  # Convert to GB
+    except:
+        return 0
+
+def categorize_jobs_by_size(job_names, sched_path):
+    """Categorize jobs by their largest file size"""
+    job_categories = {
+        'huge': [],      # >10GB files
+        'large': [],     # 5-10GB files  
+        'medium': [],    # 2-5GB files
+        'small': []      # <2GB files
+    }
+    
+    for job_name in job_names:
+        job_dir = os.path.join(sched_path, job_name)
+        if not os.path.exists(job_dir):
+            continue
+            
+        # Find largest pcap file in this job
+        pcap_files = [f for f in os.listdir(job_dir) if f.endswith("network.pcap")]
+        max_size = 0
+        
+        for pcap_file in pcap_files:
+            file_path = os.path.join(job_dir, pcap_file)
+            size_gb = get_file_size_gb(file_path)
+            max_size = max(max_size, size_gb)
+        
+        # Categorize based on largest file in job
+        if max_size > 10:
+            job_categories['huge'].append(job_name)
+            print(f"Job {job_name}: HUGE ({max_size:.1f}GB) - will process sequentially")
+        elif max_size > 5:
+            job_categories['large'].append(job_name)
+            print(f"Job {job_name}: LARGE ({max_size:.1f}GB) - max 2 parallel")
+        elif max_size > 2:
+            job_categories['medium'].append(job_name)
+            print(f"Job {job_name}: MEDIUM ({max_size:.1f}GB) - max 3 parallel")
+        else:
+            job_categories['small'].append(job_name)
+            print(f"Job {job_name}: SMALL ({max_size:.1f}GB) - max 4 parallel")
+    
+    return job_categories
 
 def parse_network_filename(filename):
     """
@@ -82,6 +131,11 @@ def make_csv(job_name, path):
         input_file = os.path.join(job_dir, file)
         output_file = os.path.join(output_dir, f"{job_name}_{worker_type}_{index}_{ip}_network.csv")
         
+        # Check if output file already exists
+        if os.path.exists(output_file):
+            print(f"Output file already exists, skipping: {output_file}")
+            continue
+        
         # Check if file is not empty
         try:
             file_size = os.path.getsize(input_file)
@@ -92,7 +146,8 @@ def make_csv(job_name, path):
             print(f"Error accessing file {input_file}: {e}")
             continue
         
-        print(f"Processing: {input_file}")
+        file_size_gb = file_size / (1024**3)
+        print(f"Processing: {input_file} ({file_size_gb:.1f}GB)")
         print(f"Parsed - Type: {worker_type}, Index: {index}, IP: {ip}")
         
         # Method 1: Check file duration and process accordingly
@@ -142,15 +197,50 @@ def make_csv(job_name, path):
             except subprocess.CalledProcessError as e:
                 print(f"Error occurred: {e}")
                 print("Please check if tshark is installed.")
+        
+        # Force garbage collection after each large file
+        if file_size_gb > 5:
+            gc.collect()
 
 def process_job_name(job_name, sched_path):
     print(f'Processing: {job_name} (location: {sched_path})')
     make_csv(job_name, sched_path)
+    
+    # Force garbage collection after each job
+    gc.collect()
+
+def process_jobs_with_memory_management(job_categories, sched_path):
+    """Process jobs with memory-aware parallelization"""
+    
+    print("\n=== PROCESSING HUGE FILES (>10GB) SEQUENTIALLY ===")
+    if job_categories['huge']:
+        for job_name in job_categories['huge']:
+            print(f"\nProcessing HUGE job: {job_name}")
+            process_job_name(job_name, sched_path)
+    
+    print("\n=== PROCESSING LARGE FILES (5-10GB) - MAX 2 PARALLEL ===")
+    if job_categories['large']:
+        with multiprocessing.Pool(processes=2) as pool:
+            process_job_name_partial = partial(process_job_name, sched_path=sched_path)
+            pool.map(process_job_name_partial, job_categories['large'])
+    
+    print("\n=== PROCESSING MEDIUM FILES (2-5GB) - MAX 3 PARALLEL ===")
+    if job_categories['medium']:
+        with multiprocessing.Pool(processes=3) as pool:
+            process_job_name_partial = partial(process_job_name, sched_path=sched_path)
+            pool.map(process_job_name_partial, job_categories['medium'])
+    
+    print("\n=== PROCESSING SMALL FILES (<2GB) - MAX 4 PARALLEL ===")
+    if job_categories['small']:
+        with multiprocessing.Pool(processes=4) as pool:
+            process_job_name_partial = partial(process_job_name, sched_path=sched_path)
+            pool.map(process_job_name_partial, job_categories['small'])
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', type=str, default='./')
     parser.add_argument('--jobs', type=str, nargs='+', help='Specific job names to process (process all if not specified)')
+    parser.add_argument('--force-parallel', type=int, help='Force specific number of parallel processes (ignores size-based optimization)')
     args = parser.parse_args()
     path = args.path
     
@@ -172,10 +262,23 @@ def main():
     
     print(f"Jobs to process: {job_names}")
     
-    # Use multiprocessing (limit CPU cores)
-    with multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), 4)) as pool:
-        process_job_name_partial = partial(process_job_name, sched_path=sched_path)
-        pool.map(process_job_name_partial, job_names)
+    if args.force_parallel:
+        print(f"Using forced parallel processing with {args.force_parallel} processes")
+        with multiprocessing.Pool(processes=args.force_parallel) as pool:
+            process_job_name_partial = partial(process_job_name, sched_path=sched_path)
+            pool.map(process_job_name_partial, job_names)
+    else:
+        # Use memory-aware processing
+        print("Analyzing file sizes for memory-optimized processing...")
+        job_categories = categorize_jobs_by_size(job_names, sched_path)
+        
+        print(f"\nJob distribution:")
+        print(f"  HUGE (>10GB): {len(job_categories['huge'])} jobs")
+        print(f"  LARGE (5-10GB): {len(job_categories['large'])} jobs") 
+        print(f"  MEDIUM (2-5GB): {len(job_categories['medium'])} jobs")
+        print(f"  SMALL (<2GB): {len(job_categories['small'])} jobs")
+        
+        process_jobs_with_memory_management(job_categories, sched_path)
 
 if __name__ == '__main__':
     main()

@@ -56,7 +56,7 @@ def parse_network_filename(filename):
 
 def make_csv(job_name, data_path):
     """Convert pcap files to CSV format"""
-    job_dir = os.path.join(data_path, 'allreduce', job_name)
+    job_dir = os.path.join(data_path, job_name)
     
     # Check if directory exists
     if not os.path.exists(job_dir):
@@ -162,16 +162,15 @@ def main():
     args = parser.parse_args()
     
     data_path = args.path
-    allreduce_path = os.path.join(data_path, 'allreduce')
     
     # Check if specific jobs are specified
     if args.jobs:
         job_names = args.jobs
     else:
-        # Find all job directories
+        # Find all job directories directly in data_path
         job_names = []
         try:
-            job_names = [d for d in os.listdir(allreduce_path) if os.path.isdir(os.path.join(allreduce_path, d))]
+            job_names = [d for d in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, d))]
             job_names.sort()
         except Exception as e:
             print(f"Error getting directory list: {e}")

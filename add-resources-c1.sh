@@ -42,7 +42,7 @@ PROXY_PID=$!
 sleep 3
 
 # 노드 리스트 - 클러스터1
-NODES=("xsailor-master" "xsailor-worker1")
+NODES=("xsailor-master" "xsailor-worker1" "xsailor-worker2" "xsailor-worker3")
 # 추가할 리소스 유형
 RESOURCES=("internet" "externet")
 # 리소스 값 (명령줄에서 입력받은 값)

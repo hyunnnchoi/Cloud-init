@@ -19,6 +19,7 @@ spec:
             "tensorspot/gpu_request": "1.0"
             "tensorspot/gpu_mem": "17179869184"
             "tensorspot/placement_policy": "colo"
+            "tensorspot/skewness_level": "4.2"
 
         spec:
           containers:
@@ -36,7 +37,7 @@ spec:
                 STARTTIME=`date "+%H:%M:%S.%N"`;
                 echo "$STARTTIME" > /result/id20_imagenet_inception3_sync_batch256/id20_imagenet_inception3_sync_batch256_${JOB}_start_time.txt;
 
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=inception3 --data_name=imagenet --display_every=1 --batch_size=64 --cross_replica_sync=true --num_batches=10063 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id20_imagenet_inception3_sync_batch256/id20_imagenet_inception3_sync_batch256_${JOB}_log.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=inception3 --data_name=imagenet --display_every=1 --batch_size=64 --cross_replica_sync=true --num_batches=10 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id20_imagenet_inception3_sync_batch256/id20_imagenet_inception3_sync_batch256_${JOB}_log.txt;
 
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id20_imagenet_inception3_sync_batch256/id20_imagenet_inception3_sync_batch256_${JOB}_end_time.txt
@@ -81,6 +82,7 @@ spec:
             "tensorspot/num_worker": "4"
             "tensorspot/net_request": "1783"
             "tensorspot/placement_policy": "colo"
+            "tensorspot/skewness_level": "4.2"
 
         spec:
           containers:
@@ -93,7 +95,7 @@ spec:
                 mkdir -p /result/id20_imagenet_inception3_sync_batch256;
                 echo "id20_imagenet_inception3_sync_batch256" > /tf_cnn_benchmarks/model.txt;
                 top -d 0.1 -b | grep tf_cnn > /result/id20_imagenet_inception3_sync_batch256/id20_imagenet_inception3_sync_batch256_${JOB}_cpu.txt &
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=inception3 --data_name=imagenet --display_every=1 --batch_size=64 --cross_replica_sync=true --num_batches=10063 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id20_imagenet_inception3_sync_batch256/id20_imagenet_inception3_sync_batch256_${JOB}_log.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=inception3 --data_name=imagenet --display_every=1 --batch_size=64 --cross_replica_sync=true --num_batches=10 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id20_imagenet_inception3_sync_batch256/id20_imagenet_inception3_sync_batch256_${JOB}_log.txt;
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id20_imagenet_inception3_sync_batch256/id20_imagenet_inception3_sync_batch256_${JOB}_end_time.txt
             ports:

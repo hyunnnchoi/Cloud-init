@@ -19,19 +19,27 @@ fi
 # 마스터/워커 노드 인자 확인
 if [ "$#" -ne 1 ]; then
     echo "마스터 노드인지 워커 노드인지 지정해주세요."
-    echo "사용법: sudo ./lambda_labs_setup.sh [master|worker]"
+    echo "사용법: sudo ./setup-c1.sh [master|worker1|worker2|worker3]"
     exit 1
 fi
 
 NODE_TYPE=$1
 
-if [[ "$NODE_TYPE" != "master" && "$NODE_TYPE" != "worker" ]]; then
-    echo "인자는 'master' 또는 'worker'여야 합니다."
-    echo "사용법: sudo ./lambda_labs_setup.sh [master|worker]"
+if [[ "$NODE_TYPE" != "master" && "$NODE_TYPE" != "worker1" && "$NODE_TYPE" != "worker2" && "$NODE_TYPE" != "worker3" ]]; then
+    echo "인자는 'master', 'worker1', 'worker2', 'worker3' 중 하나여야 합니다."
+    echo "사용법: sudo ./setup-c1.sh [master|worker1|worker2|worker3]"
     exit 1
 fi
 
+# 노드 이름 동적 생성
+if [[ "$NODE_TYPE" == "master" ]]; then
+    NODE_NAME="xsailor-master"
+else
+    NODE_NAME="xsailor-${NODE_TYPE}"
+fi
+
 echo "노드 타입: $NODE_TYPE"
+echo "노드 이름: $NODE_NAME"
 echo ""
 
 # 사용자 확인 요청
@@ -242,7 +250,7 @@ setup_master_node() {
     kubeadm config images pull
 
     # Flannel 10.244.0.0/16 사용
-    kubeadm init --pod-network-cidr=10.244.0.0/16 --node-name xsailor-master
+    kubeadm init --pod-network-cidr=10.244.0.0/16 --node-name $NODE_NAME
 
     # 실제 일반 사용자 확인 (logname 명령이 실패하는 경우 대비)
     if NORMAL_USER=$(logname 2>/dev/null); then
@@ -295,14 +303,20 @@ setup_master_node() {
         IP_ADDRESS=$(ip -4 addr show | grep -v '127.0.0.1' | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -n 1)
     fi
 
-    echo -e "\n다음 명령어를 워커 노드에서 실행하세요:\n"
-    echo "sudo kubeadm join ${IP_ADDRESS}:6443 --token ${JOIN_TOKEN} --discovery-token-ca-cert-hash sha256:${HASH} --node-name xsailor-worker1"
+    echo -e "\n각 워커 노드에서 다음 명령어를 실행하세요:\n"
+    echo "워커1: sudo kubeadm join ${IP_ADDRESS}:6443 --token ${JOIN_TOKEN} --discovery-token-ca-cert-hash sha256:${HASH} --node-name xsailor-worker1"
+    echo "워커2: sudo kubeadm join ${IP_ADDRESS}:6443 --token ${JOIN_TOKEN} --discovery-token-ca-cert-hash sha256:${HASH} --node-name xsailor-worker2"
+    echo "워커3: sudo kubeadm join ${IP_ADDRESS}:6443 --token ${JOIN_TOKEN} --discovery-token-ca-cert-hash sha256:${HASH} --node-name xsailor-worker3"
 
     # 설정을 파일로 저장
-    JOIN_COMMAND="sudo kubeadm join ${IP_ADDRESS}:6443 --token ${JOIN_TOKEN} --discovery-token-ca-cert-hash sha256:${HASH} --node-name xsailor-worker1"
-    echo "$JOIN_COMMAND" > $USER_HOME/worker_join_command.txt
-    chown $NORMAL_USER:$NORMAL_USER $USER_HOME/worker_join_command.txt
-    echo "$JOIN_COMMAND" > /root/worker_join_command.txt  # root 사용자를 위한 복사본
+    cat > $USER_HOME/worker_join_commands.txt << EOF
+# 각 워커 노드에서 실행할 명령어
+sudo kubeadm join ${IP_ADDRESS}:6443 --token ${JOIN_TOKEN} --discovery-token-ca-cert-hash sha256:${HASH} --node-name xsailor-worker1
+sudo kubeadm join ${IP_ADDRESS}:6443 --token ${JOIN_TOKEN} --discovery-token-ca-cert-hash sha256:${HASH} --node-name xsailor-worker2
+sudo kubeadm join ${IP_ADDRESS}:6443 --token ${JOIN_TOKEN} --discovery-token-ca-cert-hash sha256:${HASH} --node-name xsailor-worker3
+EOF
+    chown $NORMAL_USER:$NORMAL_USER $USER_HOME/worker_join_commands.txt
+    cp $USER_HOME/worker_join_commands.txt /root/worker_join_commands.txt  # root 사용자를 위한 복사본
 
     # Flannel 네트워크 설치
     echo "Flannel 네트워크 설치 중..."
@@ -333,10 +347,13 @@ setup_worker_node() {
 
     # Join 명령어 안내
     echo -e "\n마스터 노드에서 출력된 join 명령어를 실행하세요."
-    echo "예시: sudo kubeadm join 10.19.86.137:6443 \\"
-    echo "--token wgd07r.bf72vojha3okou4d \\"
-    echo "--discovery-token-ca-cert-hash sha256:ada3674485d5535aecad9ac1f2117dac3334a3e9d82822f30314b29d24007ec5 \\"
-    echo "--node-name xsailor-worker1"
+    echo "현재 노드: $NODE_NAME"
+    echo "예시: sudo kubeadm join [마스터IP]:6443 \\"
+    echo "--token [토큰] \\"
+    echo "--discovery-token-ca-cert-hash sha256:[해시] \\"
+    echo "--node-name $NODE_NAME"
+    echo ""
+    echo "마스터 노드의 ~/worker_join_commands.txt 파일에서 해당 워커 노드 명령어를 확인하세요."
 
     echo "Worker Node 설정 안내 완료"
 }
@@ -397,6 +414,8 @@ setup_node_selector() {
     echo "====================> Node selector 설정 중..."
     kubectl label nodes xsailor-master twonode=worker || true
     kubectl label nodes xsailor-worker1 twonode=worker || true
+    kubectl label nodes xsailor-worker2 twonode=worker || true
+    kubectl label nodes xsailor-worker3 twonode=worker || true
 
     echo "Node selector 설정 완료"
 }
@@ -482,11 +501,11 @@ if [[ "$NODE_TYPE" == "master" ]]; then
     setup_pv_pvc
     setup_iperf
     echo "마스터 노드 설정이 완료되었습니다."
-    echo "워커 노드 조인 명령어를 확인하세요: ~/worker_join_command.txt"
+    echo "워커 노드 조인 명령어를 확인하세요: ~/worker_join_commands.txt"
 fi
 
-# 워커 노드 설정
-if [[ "$NODE_TYPE" == "worker" ]]; then
+# 워커 노드 설정 (모든 워커 노드 통합)
+if [[ "$NODE_TYPE" == "worker1" || "$NODE_TYPE" == "worker2" || "$NODE_TYPE" == "worker3" ]]; then
     echo "워커 노드 설정을 시작합니다..."
     common_setup
     setup_worker_node

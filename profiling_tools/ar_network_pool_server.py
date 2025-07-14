@@ -180,7 +180,7 @@ def main():
     print(f"Running on node: {get_node_name()}")
     
     # Use multiprocessing (limit CPU cores)
-    with multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), 16)) as pool:
+    with multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), 32)) as pool:
         process_job_name_partial = partial(process_job_name, data_path=data_path)
         pool.map(process_job_name_partial, job_names)
 

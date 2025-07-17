@@ -6,7 +6,7 @@ TFPATH="/home/tensorspot/Cloud-init"
 SAVEPATH="/home/tensorspot/tfjob"
 
 
-PEM_KEY="/home/ubuntu/tethys-v-c2/tethys.pem"
+PEM_KEY="/home/ubuntu/tethys-v/tethys.pem"
 
 
 sudo rm -rf ${SAVEPATH}/*

@@ -71,6 +71,6 @@ spec:
   containers:
   - name: tensorspot-scheduler
     # image: potato4332/tensorspot_ar:v0.0.1
-    image: potato4332/tensorspot_ar:v0.0.1
+    image: potato4332/tensorspot_ar:tethys-v0.0.1
     # image: yeonhooy/tensorspot_ar:v10.7
     #image: yeonhooy/tensorspot_ar:v9.1 # yeonhooy/tensorspot_ar:v2.6

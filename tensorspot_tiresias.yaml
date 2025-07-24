@@ -71,5 +71,5 @@ spec:
   containers:
   - name: tensorspot-scheduler
     # image: yeonhooy/tensorspot_tiresias:v1.1
-    image: potato4332/tensorspot_tiresias:v0.0.1
+    image: potato4332/tensorspot_ar:tiresias-v0.0.1
     imagePullPolicy: Always

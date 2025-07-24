@@ -1,136 +1,121 @@
 #!/bin/bash
 TFPATH="/home/tensorspot/Cloud-init"
-DELETION_TIMEOUT=30  # 삭제 대기 시간 (초)
+MAX_RETRY_PER_JOB=5  # 각 작업당 최대 재시도 횟수
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') - Pod 정리 스크립트 시작됨"
+echo "$(date '+%Y-%m-%d %H:%M:%S') - YAML 기반 Pod 정리 스크립트 시작됨"
 
-# TFJob이 완전히 삭제될 때까지 대기하는 함수
-wait_for_tfjob_deletion() {
+# 실패한 작업들을 추적하는 연관배열
+declare -A FAILED_JOBS
+declare -A RETRY_COUNTS
+
+# YAML 기반 삭제 함수
+try_delete_job() {
     local job_name=$1
-    local timeout=$2
-    local start_time=$(date +%s)
+    local yaml_file="${TFPATH}/net_script/${job_name}_spot.yaml"
     
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - TFJob $job_name 삭제 완료 대기 중..."
+    if [ ! -f "$yaml_file" ]; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - 경고: YAML 파일 없음 - $yaml_file"
+        return 1
+    fi
     
-    while true; do
-        # TFJob 존재 여부 확인
-        if ! kubectl get tfjob $job_name >/dev/null 2>&1; then
-            echo "$(date '+%Y-%m-%d %H:%M:%S') - TFJob $job_name 삭제 완료 확인"
-            return 0
-        fi
-        
-        # 해당 TFJob의 모든 Pod 확인
-        local remaining_pods=$(kubectl get pod -l tf-job-name=$job_name 2>/dev/null | grep -v NAME | wc -l)
-        if [ "$remaining_pods" -eq 0 ]; then
-            echo "$(date '+%Y-%m-%d %H:%M:%S') - TFJob $job_name 의 모든 Pod 삭제 완료"
-            return 0
-        fi
-        
-        # 타임아웃 확인
-        local current_time=$(date +%s)
-        local elapsed=$((current_time - start_time))
-        if [ $elapsed -ge $timeout ]; then
-            echo "$(date '+%Y-%m-%d %H:%M:%S') - TFJob $job_name 삭제 대기 시간 초과 (${timeout}초)"
-            return 1
-        fi
-        
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - TFJob $job_name 삭제 대기 중... (남은 Pod: $remaining_pods개, 경과시간: ${elapsed}초)"
-        sleep 2
-    done
-}
-
-
-
-# TFJob을 즉시 삭제하는 함수
-safe_delete_tfjob() {
-    local job_name=$1
+    # 현재 재시도 횟수 증가
+    RETRY_COUNTS[$job_name]=$((${RETRY_COUNTS[$job_name]:-0} + 1))
+    local current_retry=${RETRY_COUNTS[$job_name]}
     
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - TFJob $job_name 삭제 시작"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - 작업 $job_name YAML 삭제 시도 $current_retry/$MAX_RETRY_PER_JOB: $yaml_file"
     
-    # TFJob 존재 여부 확인
-    if ! kubectl get tfjob $job_name >/dev/null 2>&1; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - TFJob $job_name 이미 존재하지 않음"
+    # YAML 파일로 삭제
+    kubectl delete -f "$yaml_file" --timeout=10s
+    local delete_result=$?
+    
+    # 삭제 후 잠시 대기
+    sleep 1
+    
+    # 관련 Pod가 모두 사라졌는지 확인
+    local remaining_pods=$(kubectl get pod 2>/dev/null | grep -E "${job_name}" | grep -E "(controller-|chief-|worker-)" | wc -l)
+    
+    if [ $delete_result -eq 0 ] && [ $remaining_pods -eq 0 ]; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - 작업 $job_name 삭제 성공 (시도: $current_retry)"
+        # 성공하면 추적에서 제거
+        unset FAILED_JOBS[$job_name]
+        unset RETRY_COUNTS[$job_name]
         return 0
-    fi
-    
-    # 삭제 전 관련 Pod 수 확인
-    local initial_pod_count=$(kubectl get pod -l tf-job-name=$job_name 2>/dev/null | grep -v NAME | wc -l)
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - TFJob $job_name 관련 Pod 수: $initial_pod_count개"
-    
-    # Completed 상태 Pod는 바로 강제 삭제 (grace period 0)
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - TFJob $job_name 즉시 삭제 시도 (grace-period=0)"
-    kubectl delete tfjob $job_name --force --grace-period=0 >/dev/null 2>&1
-    
-    # 삭제 완료 대기
-    if wait_for_tfjob_deletion $job_name $DELETION_TIMEOUT; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - TFJob $job_name 삭제 성공"
-        return 0
-    fi
-    
-    # 실패 시 개별 Pod 정리
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - TFJob $job_name 삭제 실패, 개별 Pod 정리 시도"
-    local remaining_pods=$(kubectl get pod -l tf-job-name=$job_name -o name 2>/dev/null)
-    if [ -n "$remaining_pods" ]; then
-        echo "$remaining_pods" | while read pod; do
-            echo "$(date '+%Y-%m-%d %H:%M:%S') - $pod 개별 삭제 시도"
-            kubectl delete $pod --force --grace-period=0 >/dev/null 2>&1
-        done
-    fi
-    
-    # 최종 확인
-    sleep 3
-    local final_pod_count=$(kubectl get pod -l tf-job-name=$job_name 2>/dev/null | grep -v NAME | wc -l)
-    if [ "$final_pod_count" -eq 0 ]; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - TFJob $job_name 관련 모든 Pod 정리 완료"
+    elif [ $remaining_pods -eq 0 ]; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - 작업 $job_name Pod 정리 완료 (시도: $current_retry)"
+        # 성공하면 추적에서 제거
+        unset FAILED_JOBS[$job_name]
+        unset RETRY_COUNTS[$job_name]
         return 0
     else
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - 경고: TFJob $job_name 일부 Pod($final_pod_count개) 정리 실패"
-        kubectl get pod -l tf-job-name=$job_name 2>/dev/null | grep -v NAME
-        return 1
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - 작업 $job_name 삭제 미완료, 남은 Pod: $remaining_pods개 (시도: $current_retry)"
+        
+        if [ $current_retry -ge $MAX_RETRY_PER_JOB ]; then
+            echo "$(date '+%Y-%m-%d %H:%M:%S') - 작업 $job_name 최대 재시도 초과, 추적에서 제거"
+            unset FAILED_JOBS[$job_name]
+            unset RETRY_COUNTS[$job_name]
+            return 1
+        else
+            # 실패한 작업으로 등록
+            FAILED_JOBS[$job_name]=1
+            return 1
+        fi
     fi
 }
 
 while true; do
     echo "$(date '+%Y-%m-%d %H:%M:%S') - Completed 상태 Pod 확인 중..."
     
-    # Completed 상태의 controller, chief, worker Pod 찾기
-    COMPLETED_PODS=$(kubectl get pod | grep -E "(controller-|chief-|worker-)" | grep Completed | awk '{print $1}')
+    # 새로 발견한 Completed Pod들
+    COMPLETED_PODS=$(kubectl get pod 2>/dev/null | grep -E "(controller-|chief-|worker-)" | grep Completed | awk '{print $1}')
     
+    # 처리할 작업 목록 (새로운 것 + 이전 실패한 것들)
+    JOBS_TO_PROCESS=""
+    
+    # 새로 발견한 Completed Pod에서 작업 이름 추출
     if [ -n "$COMPLETED_PODS" ]; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - Completed 상태 Pod 발견: $(echo $COMPLETED_PODS | wc -w)개"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - 새로운 Completed 상태 Pod 발견: $(echo $COMPLETED_PODS | wc -w)개"
         
-        # 중복 제거를 위해 TFJob 이름 추출
-        TFJOB_NAMES=""
         for pod in $COMPLETED_PODS; do
-            # TFJob 이름 추출 (Pod 라벨에서 확인)
-            TFJOB_NAME=$(kubectl get pod $pod -o jsonpath='{.metadata.labels.tf-job-name}' 2>/dev/null)
+            # 작업 이름 추출
+            JOB_NAME=$(echo $pod | awk -F '-' '{
+                jobname = $1
+                for (i = 2; i <= NF - 2; i++) {
+                    jobname = jobname "_" $i
+                }
+                print jobname
+            }')
             
-            if [ -z "$TFJOB_NAME" ]; then
-                # 라벨이 없는 경우 Pod 이름에서 추출
-                TFJOB_NAME=$(echo $pod | awk -F '-' '{
-                    jobname = $1
-                    for (i = 2; i <= NF - 2; i++) {
-                        jobname = jobname "_" $i
-                    }
-                    print jobname
-                }')
+            # 중복 방지하며 추가
+            if [[ ! " $JOBS_TO_PROCESS " =~ " $JOB_NAME " ]]; then
+                JOBS_TO_PROCESS="$JOBS_TO_PROCESS $JOB_NAME"
             fi
-            
-            # 중복 제거
-            if [[ ! " $TFJOB_NAMES " =~ " $TFJOB_NAME " ]]; then
-                TFJOB_NAMES="$TFJOB_NAMES $TFJOB_NAME"
+        done
+    fi
+    
+    # 이전에 실패한 작업들도 추가
+    for failed_job in "${!FAILED_JOBS[@]}"; do
+        if [[ ! " $JOBS_TO_PROCESS " =~ " $failed_job " ]]; then
+            JOBS_TO_PROCESS="$JOBS_TO_PROCESS $failed_job"
+        fi
+    done
+    
+    # 처리할 작업이 있는 경우
+    if [ -n "$JOBS_TO_PROCESS" ]; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - 처리할 작업: $(echo $JOBS_TO_PROCESS | wc -w)개"
+        
+        for job_name in $JOBS_TO_PROCESS; do
+            if [ -n "$job_name" ]; then
+                try_delete_job "$job_name"
             fi
         done
         
-        # 각 TFJob 삭제
-        for tfjob_name in $TFJOB_NAMES; do
-            if [ -n "$tfjob_name" ]; then
-                safe_delete_tfjob "$tfjob_name"
-            fi
-        done
-        
+        # 현재 추적 중인 실패 작업 수 출력
+        local failed_count=${#FAILED_JOBS[@]}
+        if [ $failed_count -gt 0 ]; then
+            echo "$(date '+%Y-%m-%d %H:%M:%S') - 추적 중인 실패 작업: $failed_count개 ($(echo ${!FAILED_JOBS[@]}))"
+        fi
     else
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - Completed 상태 Pod 없음"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - Completed 상태 Pod 및 실패 작업 없음"
     fi
     
     echo "$(date '+%Y-%m-%d %H:%M:%S') - 3초 후 다시 확인"

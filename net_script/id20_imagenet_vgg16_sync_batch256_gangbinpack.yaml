@@ -19,7 +19,7 @@ spec:
             "tensorspot/gpu_request": "1.0"
             "tensorspot/gpu_mem": "17179869184"
             "tensorspot/placement_policy": "binpack"
-            "tensorspot/skewness_level": "5.1"
+            "tensorspot/skewness_level": "5.0"
 
         spec:
           containers:
@@ -82,7 +82,7 @@ spec:
             "tensorspot/num_worker": "2"
             "tensorspot/net_request": "2087"
             "tensorspot/placement_policy": "binpack"
-            "tensorspot/skewness_level": "5.1"
+            "tensorspot/skewness_level": "5.0"
 
         spec:
           containers:

@@ -37,7 +37,7 @@ spec:
                 STARTTIME=`date "+%H:%M:%S.%N"`;
                 echo "$STARTTIME" > /result/id26_cifar10_resnet44_sync_batch8192/id26_cifar10_resnet44_sync_batch8192_${JOB}_start_time.txt;
 
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet44 --data_name=cifar10 --display_every=1 --batch_size=1024 --cross_replica_sync=true --num_batches=880 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id26_cifar10_resnet44_sync_batch8192/id26_cifar10_resnet44_sync_batch8192_${JOB}_log.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet44 --data_name=cifar10 --display_every=1 --batch_size=1024 --cross_replica_sync=true --num_batches=362 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id26_cifar10_resnet44_sync_batch8192/id26_cifar10_resnet44_sync_batch8192_${JOB}_log.txt;
 
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id26_cifar10_resnet44_sync_batch8192/id26_cifar10_resnet44_sync_batch8192_${JOB}_end_time.txt
@@ -95,7 +95,7 @@ spec:
                 mkdir -p /result/id26_cifar10_resnet44_sync_batch8192;
                 echo "id26_cifar10_resnet44_sync_batch8192" > /tf_cnn_benchmarks/model.txt;
                 top -d 0.1 -b | grep tf_cnn > /result/id26_cifar10_resnet44_sync_batch8192/id26_cifar10_resnet44_sync_batch8192_${JOB}_cpu.txt &
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet44 --data_name=cifar10 --display_every=1 --batch_size=1024 --cross_replica_sync=true --num_batches=880 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id26_cifar10_resnet44_sync_batch8192/id26_cifar10_resnet44_sync_batch8192_${JOB}_log.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=resnet44 --data_name=cifar10 --display_every=1 --batch_size=1024 --cross_replica_sync=true --num_batches=362 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id26_cifar10_resnet44_sync_batch8192/id26_cifar10_resnet44_sync_batch8192_${JOB}_log.txt;
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id26_cifar10_resnet44_sync_batch8192/id26_cifar10_resnet44_sync_batch8192_${JOB}_end_time.txt
             ports:

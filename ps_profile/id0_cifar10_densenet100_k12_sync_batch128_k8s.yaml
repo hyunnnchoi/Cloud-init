@@ -23,7 +23,7 @@ spec:
                 echo "id0_cifar10_densenet100_k12_sync_batch128" > /tf_cnn_benchmarks/model.txt;
                 STARTTIME=`date "+%H:%M:%S.%N"`;
                 echo "$STARTTIME" > /result/id0_cifar10_densenet100_k12_sync_batch128/id0_cifar10_densenet100_k12_sync_batch128_${JOB}_start_time.txt;
-                nsys profile --duration=120 -o /result/id0_cifar10_densenet100_k12_sync_batch128/id0_cifar10_densenet100_k12_sync_batch128_${JOB} --force-overwrite true python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=parameter_server --model=densenet100_k12 --data_name=cifar10 --display_every=1 --batch_size=128 --cross_replica_sync=true --num_batches=600 --num_warmup_batches=0;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=parameter_server --model=densenet100_k12 --data_name=cifar10 --display_every=1 --batch_size=128 --cross_replica_sync=true --num_batches=600 --num_warmup_batches=0;
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id0_cifar10_densenet100_k12_sync_batch128/id0_cifar10_densenet100_k12_sync_batch128_${JOB}_end_time.txt
             ports:

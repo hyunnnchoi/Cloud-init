@@ -9,25 +9,22 @@ spec:
     WORKER:
       replicas: 8
       template:
-
         metadata:
           annotations:
-            "tensorspot/num_controller": "1"
+            "tensorspot/num_ps": "8"
             "tensorspot/num_worker": "8"
-            "tensorspot/net_request": "1057"
+            "tensorspot/net_request": "0"
             "tensorspot/gpu_limit": "1.0"
             "tensorspot/gpu_request": "1.0"
             "tensorspot/gpu_mem": "17179869184"
             "tensorspot/placement_policy": "tiresias"
             "tensorspot/skewness_level": "2.6"
-
         spec:
           containers:
           - name: tensorflow
             command: ["/bin/sh", "-c"]
             args:
-              - |
-                cd /tf_cnn_benchmarks/NVML;
+              - cd /tf_cnn_benchmarks/NVML;
                 make;
                 JOB=`python /tf_cnn_benchmarks/job_name.py`;
                 CONTROLLER_HOST=`python -c "import os, json; tf_config = json.loads(os.environ.get('TF_CONFIG') or '{}'); cluster_config = tf_config.get('cluster', {}); controller_host = cluster_config.get('controller'); print(','.join(controller_host))"`;
@@ -36,9 +33,7 @@ spec:
                 echo "id46_cifar10_alexnet_sync_batch32768" > /tf_cnn_benchmarks/model.txt;
                 STARTTIME=`date "+%H:%M:%S.%N"`;
                 echo "$STARTTIME" > /result/id46_cifar10_alexnet_sync_batch32768/id46_cifar10_alexnet_sync_batch32768_${JOB}_start_time.txt;
-
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=alexnet --data_name=cifar10 --display_every=1 --batch_size=4096 --cross_replica_sync=true --num_batches=994 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id46_cifar10_alexnet_sync_batch32768/id46_cifar10_alexnet_sync_batch32768_${JOB}_log.txt;
-
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=parameter_server --model=alexnet --data_name=cifar10 --display_every=1 --batch_size=4096 --cross_replica_sync=true --num_batches=198 --num_warmup_batches=0;
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id46_cifar10_alexnet_sync_batch32768/id46_cifar10_alexnet_sync_batch32768_${JOB}_end_time.txt
             ports:
@@ -49,7 +44,6 @@ spec:
             resources:
               requests:
                 cpu: 1
-                nvidia.com/gpu: 1
               limits:
                 cpu: 5
                 nvidia.com/gpu: 1
@@ -68,34 +62,28 @@ spec:
               sizeLimit: "8G"
           nodeSelector:
             twonode: worker
-
           schedulerName: tensorspot-scheduler
-
-
-    CONTROLLER:
-      replicas: 1
+    PS:
+      replicas: 8
       template:
-
         metadata:
           annotations:
-            "tensorspot/num_controller": "1"
+            "tensorspot/num_ps": "8"
             "tensorspot/num_worker": "8"
-            "tensorspot/net_request": "1057"
+            "tensorspot/net_request": "0"
             "tensorspot/placement_policy": "tiresias"
             "tensorspot/skewness_level": "2.6"
-
         spec:
           containers:
           - name: tensorflow
             command: ["/bin/sh", "-c"]
             args:
-              - |
-                JOB=`python /tf_cnn_benchmarks/job_name.py`;
+              - JOB=`python /tf_cnn_benchmarks/job_name.py`;
                 CONTROLLER_HOST=`python -c "import os, json; tf_config = json.loads(os.environ.get('TF_CONFIG') or '{}'); cluster_config = tf_config.get('cluster', {}); controller_host = cluster_config.get('controller'); print(','.join(controller_host))"`;
                 mkdir -p /result/id46_cifar10_alexnet_sync_batch32768;
                 echo "id46_cifar10_alexnet_sync_batch32768" > /tf_cnn_benchmarks/model.txt;
                 top -d 0.1 -b | grep tf_cnn > /result/id46_cifar10_alexnet_sync_batch32768/id46_cifar10_alexnet_sync_batch32768_${JOB}_cpu.txt &
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=distributed_all_reduce --model=alexnet --data_name=cifar10 --display_every=1 --batch_size=4096 --cross_replica_sync=true --num_batches=994 --num_warmup_batches=0  --controller_host=${CONTROLLER_HOST} --all_reduce_spec=nccl/xring > /result/id46_cifar10_alexnet_sync_batch32768/id46_cifar10_alexnet_sync_batch32768_${JOB}_log.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=parameter_server --model=alexnet --data_name=cifar10 --display_every=1 --batch_size=4096 --cross_replica_sync=true --num_batches=198 --num_warmup_batches=0 > /result/id46_cifar10_alexnet_sync_batch32768/id46_cifar10_alexnet_sync_batch32768_${JOB}_log.txt;
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id46_cifar10_alexnet_sync_batch32768/id46_cifar10_alexnet_sync_batch32768_${JOB}_end_time.txt
             ports:
@@ -123,7 +111,4 @@ spec:
               sizeLimit: "8G"
           nodeSelector:
             twonode: worker
-
           schedulerName: tensorspot-scheduler
-
- 

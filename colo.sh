@@ -212,12 +212,14 @@ wait_for_resources_or_arrival() {
 echo "총 GPU 수: 32"
 
 
+
 # 작업: id0_cifar10_densenet100_k12_sync_batch512 (모델: densenet100_k12, 워커: 4, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id0_cifar10_densenet100_k12_sync_batch512 4 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id0_cifar10_densenet100_k12_sync_batch512_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id0_cifar10_densenet100_k12_sync_batch512_colo.yaml
 wait_for_pod_scheduling id0_cifar10_densenet100_k12_sync_batch512 4
+
 
 
 # 작업: id1_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 0초)
@@ -228,12 +230,14 @@ kubectl apply -f ${TFPATH}/net_script/id1_cifar10_densenet100_k12_sync_batch1024
 wait_for_pod_scheduling id1_cifar10_densenet100_k12_sync_batch1024 8
 
 
+
 # 작업: id2_cifar10_densenet100_k12_sync_batch256 (모델: densenet100_k12, 워커: 2, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id2_cifar10_densenet100_k12_sync_batch256 2 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id2_cifar10_densenet100_k12_sync_batch256_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id2_cifar10_densenet100_k12_sync_batch256_colo.yaml
 wait_for_pod_scheduling id2_cifar10_densenet100_k12_sync_batch256 2
+
 
 
 # 작업: id3_cifar10_densenet100_k12_sync_batch128 (모델: densenet100_k12, 워커: 1, 도착시간: 0초)
@@ -244,12 +248,14 @@ kubectl apply -f ${TFPATH}/net_script/id3_cifar10_densenet100_k12_sync_batch128_
 wait_for_pod_scheduling id3_cifar10_densenet100_k12_sync_batch128 1
 
 
+
 # 작업: id4_cifar10_densenet100_k12_sync_batch512 (모델: densenet100_k12, 워커: 4, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id4_cifar10_densenet100_k12_sync_batch512 4 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id4_cifar10_densenet100_k12_sync_batch512_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id4_cifar10_densenet100_k12_sync_batch512_colo.yaml
 wait_for_pod_scheduling id4_cifar10_densenet100_k12_sync_batch512 4
+
 
 
 # 작업: id5_cifar10_densenet100_k12_sync_batch128 (모델: densenet100_k12, 워커: 1, 도착시간: 0초)
@@ -260,12 +266,14 @@ kubectl apply -f ${TFPATH}/net_script/id5_cifar10_densenet100_k12_sync_batch128_
 wait_for_pod_scheduling id5_cifar10_densenet100_k12_sync_batch128 1
 
 
+
 # 작업: id6_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id6_cifar10_densenet100_k12_sync_batch1024 8 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id6_cifar10_densenet100_k12_sync_batch1024_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id6_cifar10_densenet100_k12_sync_batch1024_colo.yaml
 wait_for_pod_scheduling id6_cifar10_densenet100_k12_sync_batch1024 8
+
 
 
 # 작업: id7_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 0초)
@@ -276,12 +284,14 @@ kubectl apply -f ${TFPATH}/net_script/id7_cifar10_densenet100_k12_sync_batch1024
 wait_for_pod_scheduling id7_cifar10_densenet100_k12_sync_batch1024 8
 
 
+
 # 작업: id8_cifar10_densenet100_k12_sync_batch256 (모델: densenet100_k12, 워커: 2, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id8_cifar10_densenet100_k12_sync_batch256 2 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id8_cifar10_densenet100_k12_sync_batch256_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id8_cifar10_densenet100_k12_sync_batch256_colo.yaml
 wait_for_pod_scheduling id8_cifar10_densenet100_k12_sync_batch256 2
+
 
 
 # 작업: id9_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 0초)
@@ -292,12 +302,14 @@ kubectl apply -f ${TFPATH}/net_script/id9_cifar10_densenet100_k12_sync_batch1024
 wait_for_pod_scheduling id9_cifar10_densenet100_k12_sync_batch1024 8
 
 
-# 작업: id10_speech_whisper_sync_batch8 (모델: whisper, 워커: 2, 도착시간: 0초)
-wait_for_resources_or_arrival 0 id10_speech_whisper_sync_batch8 2 colo
+
+# 작업: id10_imagenet_inception3_sync_batch128 (모델: inception3, 워커: 2, 도착시간: 0초)
+wait_for_resources_or_arrival 0 id10_imagenet_inception3_sync_batch128 2 colo
 # 작업 생성 시간 기록
-echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id10_speech_whisper_sync_batch8_job_create.txt
-kubectl apply -f ${TFPATH}/net_script/id10_speech_whisper_sync_batch8_colo.yaml
-wait_for_pod_scheduling id10_speech_whisper_sync_batch8 2
+echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id10_imagenet_inception3_sync_batch128_job_create.txt
+kubectl apply -f ${TFPATH}/net_script/id10_imagenet_inception3_sync_batch128_colo.yaml
+wait_for_pod_scheduling id10_imagenet_inception3_sync_batch128 2
+
 
 
 # 작업: id11_cifar10_densenet100_k12_sync_batch256 (모델: densenet100_k12, 워커: 2, 도착시간: 0초)
@@ -308,12 +320,14 @@ kubectl apply -f ${TFPATH}/net_script/id11_cifar10_densenet100_k12_sync_batch256
 wait_for_pod_scheduling id11_cifar10_densenet100_k12_sync_batch256 2
 
 
+
 # 작업: id12_cifar10_densenet100_k12_sync_batch256 (모델: densenet100_k12, 워커: 2, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id12_cifar10_densenet100_k12_sync_batch256 2 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id12_cifar10_densenet100_k12_sync_batch256_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id12_cifar10_densenet100_k12_sync_batch256_colo.yaml
 wait_for_pod_scheduling id12_cifar10_densenet100_k12_sync_batch256 2
+
 
 
 # 작업: id13_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 0초)
@@ -324,12 +338,14 @@ kubectl apply -f ${TFPATH}/net_script/id13_cifar10_densenet100_k12_sync_batch102
 wait_for_pod_scheduling id13_cifar10_densenet100_k12_sync_batch1024 8
 
 
-# 작업: id14_squad_gpt2_sync_batch16 (모델: gpt2, 워커: 4, 도착시간: 0초)
-wait_for_resources_or_arrival 0 id14_squad_gpt2_sync_batch16 4 colo
+
+# 작업: id14_imagenet_inception3_sync_batch256 (모델: inception3, 워커: 4, 도착시간: 0초)
+wait_for_resources_or_arrival 0 id14_imagenet_inception3_sync_batch256 4 colo
 # 작업 생성 시간 기록
-echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id14_squad_gpt2_sync_batch16_job_create.txt
-kubectl apply -f ${TFPATH}/net_script/id14_squad_gpt2_sync_batch16_colo.yaml
-wait_for_pod_scheduling id14_squad_gpt2_sync_batch16 4
+echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id14_imagenet_inception3_sync_batch256_job_create.txt
+kubectl apply -f ${TFPATH}/net_script/id14_imagenet_inception3_sync_batch256_colo.yaml
+wait_for_pod_scheduling id14_imagenet_inception3_sync_batch256 4
+
 
 
 # 작업: id15_cifar10_densenet100_k12_sync_batch256 (모델: densenet100_k12, 워커: 2, 도착시간: 0초)
@@ -340,12 +356,14 @@ kubectl apply -f ${TFPATH}/net_script/id15_cifar10_densenet100_k12_sync_batch256
 wait_for_pod_scheduling id15_cifar10_densenet100_k12_sync_batch256 2
 
 
+
 # 작업: id16_cifar10_densenet100_k12_sync_batch512 (모델: densenet100_k12, 워커: 4, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id16_cifar10_densenet100_k12_sync_batch512 4 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id16_cifar10_densenet100_k12_sync_batch512_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id16_cifar10_densenet100_k12_sync_batch512_colo.yaml
 wait_for_pod_scheduling id16_cifar10_densenet100_k12_sync_batch512 4
+
 
 
 # 작업: id17_cifar10_densenet100_k12_sync_batch512 (모델: densenet100_k12, 워커: 4, 도착시간: 0초)
@@ -356,12 +374,14 @@ kubectl apply -f ${TFPATH}/net_script/id17_cifar10_densenet100_k12_sync_batch512
 wait_for_pod_scheduling id17_cifar10_densenet100_k12_sync_batch512 4
 
 
+
 # 작업: id18_cifar10_densenet100_k12_sync_batch128 (모델: densenet100_k12, 워커: 1, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id18_cifar10_densenet100_k12_sync_batch128 1 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id18_cifar10_densenet100_k12_sync_batch128_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id18_cifar10_densenet100_k12_sync_batch128_colo.yaml
 wait_for_pod_scheduling id18_cifar10_densenet100_k12_sync_batch128 1
+
 
 
 # 작업: id19_cifar10_densenet100_k12_sync_batch512 (모델: densenet100_k12, 워커: 4, 도착시간: 0초)
@@ -372,12 +392,14 @@ kubectl apply -f ${TFPATH}/net_script/id19_cifar10_densenet100_k12_sync_batch512
 wait_for_pod_scheduling id19_cifar10_densenet100_k12_sync_batch512 4
 
 
+
 # 작업: id20_cifar10_densenet100_k12_sync_batch256 (모델: densenet100_k12, 워커: 2, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id20_cifar10_densenet100_k12_sync_batch256 2 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id20_cifar10_densenet100_k12_sync_batch256_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id20_cifar10_densenet100_k12_sync_batch256_colo.yaml
 wait_for_pod_scheduling id20_cifar10_densenet100_k12_sync_batch256 2
+
 
 
 # 작업: id21_cifar10_densenet40_k12_sync_batch4096 (모델: densenet40_k12, 워커: 4, 도착시간: 0초)
@@ -388,12 +410,14 @@ kubectl apply -f ${TFPATH}/net_script/id21_cifar10_densenet40_k12_sync_batch4096
 wait_for_pod_scheduling id21_cifar10_densenet40_k12_sync_batch4096 4
 
 
+
 # 작업: id22_imagenet_inception3_sync_batch512 (모델: inception3, 워커: 8, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id22_imagenet_inception3_sync_batch512 8 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id22_imagenet_inception3_sync_batch512_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id22_imagenet_inception3_sync_batch512_colo.yaml
 wait_for_pod_scheduling id22_imagenet_inception3_sync_batch512 8
+
 
 
 # 작업: id23_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 0초)
@@ -404,12 +428,14 @@ kubectl apply -f ${TFPATH}/net_script/id23_cifar10_densenet100_k12_sync_batch102
 wait_for_pod_scheduling id23_cifar10_densenet100_k12_sync_batch1024 8
 
 
+
 # 작업: id24_cifar10_densenet100_k12_sync_batch512 (모델: densenet100_k12, 워커: 4, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id24_cifar10_densenet100_k12_sync_batch512 4 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id24_cifar10_densenet100_k12_sync_batch512_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id24_cifar10_densenet100_k12_sync_batch512_colo.yaml
 wait_for_pod_scheduling id24_cifar10_densenet100_k12_sync_batch512 4
+
 
 
 # 작업: id25_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 0초)
@@ -420,6 +446,7 @@ kubectl apply -f ${TFPATH}/net_script/id25_cifar10_densenet100_k12_sync_batch102
 wait_for_pod_scheduling id25_cifar10_densenet100_k12_sync_batch1024 8
 
 
+
 # 작업: id26_cifar10_densenet100_k12_sync_batch128 (모델: densenet100_k12, 워커: 1, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id26_cifar10_densenet100_k12_sync_batch128 1 colo
 # 작업 생성 시간 기록
@@ -428,12 +455,14 @@ kubectl apply -f ${TFPATH}/net_script/id26_cifar10_densenet100_k12_sync_batch128
 wait_for_pod_scheduling id26_cifar10_densenet100_k12_sync_batch128 1
 
 
-# 작업: id27_squad_bert_sync_batch32 (모델: bert, 워커: 8, 도착시간: 0초)
-wait_for_resources_or_arrival 0 id27_squad_bert_sync_batch32 8 colo
+
+# 작업: id27_imagenet_inception3_sync_batch512 (모델: inception3, 워커: 8, 도착시간: 0초)
+wait_for_resources_or_arrival 0 id27_imagenet_inception3_sync_batch512 8 colo
 # 작업 생성 시간 기록
-echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id27_squad_bert_sync_batch32_job_create.txt
-kubectl apply -f ${TFPATH}/net_script/id27_squad_bert_sync_batch32_colo.yaml
-wait_for_pod_scheduling id27_squad_bert_sync_batch32 8
+echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id27_imagenet_inception3_sync_batch512_job_create.txt
+kubectl apply -f ${TFPATH}/net_script/id27_imagenet_inception3_sync_batch512_colo.yaml
+wait_for_pod_scheduling id27_imagenet_inception3_sync_batch512 8
+
 
 
 # 작업: id28_cifar10_alexnet_sync_batch16384 (모델: alexnet, 워커: 4, 도착시간: 0초)
@@ -444,12 +473,14 @@ kubectl apply -f ${TFPATH}/net_script/id28_cifar10_alexnet_sync_batch16384_colo.
 wait_for_pod_scheduling id28_cifar10_alexnet_sync_batch16384 4
 
 
+
 # 작업: id29_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id29_cifar10_densenet100_k12_sync_batch1024 8 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id29_cifar10_densenet100_k12_sync_batch1024_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id29_cifar10_densenet100_k12_sync_batch1024_colo.yaml
 wait_for_pod_scheduling id29_cifar10_densenet100_k12_sync_batch1024 8
+
 
 
 # 작업: id30_cifar10_densenet100_k12_sync_batch512 (모델: densenet100_k12, 워커: 4, 도착시간: 0초)
@@ -460,12 +491,14 @@ kubectl apply -f ${TFPATH}/net_script/id30_cifar10_densenet100_k12_sync_batch512
 wait_for_pod_scheduling id30_cifar10_densenet100_k12_sync_batch512 4
 
 
+
 # 작업: id31_cifar10_alexnet_sync_batch32768 (모델: alexnet, 워커: 8, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id31_cifar10_alexnet_sync_batch32768 8 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id31_cifar10_alexnet_sync_batch32768_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id31_cifar10_alexnet_sync_batch32768_colo.yaml
 wait_for_pod_scheduling id31_cifar10_alexnet_sync_batch32768 8
+
 
 
 # 작업: id32_imagenet_inception3_sync_batch128 (모델: inception3, 워커: 2, 도착시간: 0초)
@@ -476,12 +509,14 @@ kubectl apply -f ${TFPATH}/net_script/id32_imagenet_inception3_sync_batch128_col
 wait_for_pod_scheduling id32_imagenet_inception3_sync_batch128 2
 
 
+
 # 작업: id33_cifar10_densenet100_k12_sync_batch512 (모델: densenet100_k12, 워커: 4, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id33_cifar10_densenet100_k12_sync_batch512 4 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id33_cifar10_densenet100_k12_sync_batch512_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id33_cifar10_densenet100_k12_sync_batch512_colo.yaml
 wait_for_pod_scheduling id33_cifar10_densenet100_k12_sync_batch512 4
+
 
 
 # 작업: id34_cifar10_densenet100_k12_sync_batch256 (모델: densenet100_k12, 워커: 2, 도착시간: 0초)
@@ -492,12 +527,14 @@ kubectl apply -f ${TFPATH}/net_script/id34_cifar10_densenet100_k12_sync_batch256
 wait_for_pod_scheduling id34_cifar10_densenet100_k12_sync_batch256 2
 
 
+
 # 작업: id35_cifar10_densenet100_k12_sync_batch512 (모델: densenet100_k12, 워커: 4, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id35_cifar10_densenet100_k12_sync_batch512 4 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id35_cifar10_densenet100_k12_sync_batch512_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id35_cifar10_densenet100_k12_sync_batch512_colo.yaml
 wait_for_pod_scheduling id35_cifar10_densenet100_k12_sync_batch512 4
+
 
 
 # 작업: id36_imagenet_inception3_sync_batch128 (모델: inception3, 워커: 2, 도착시간: 0초)
@@ -508,12 +545,14 @@ kubectl apply -f ${TFPATH}/net_script/id36_imagenet_inception3_sync_batch128_col
 wait_for_pod_scheduling id36_imagenet_inception3_sync_batch128 2
 
 
+
 # 작업: id37_cifar10_densenet100_k12_sync_batch128 (모델: densenet100_k12, 워커: 1, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id37_cifar10_densenet100_k12_sync_batch128 1 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id37_cifar10_densenet100_k12_sync_batch128_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id37_cifar10_densenet100_k12_sync_batch128_colo.yaml
 wait_for_pod_scheduling id37_cifar10_densenet100_k12_sync_batch128 1
+
 
 
 # 작업: id38_cifar10_densenet100_k12_sync_batch128 (모델: densenet100_k12, 워커: 1, 도착시간: 0초)
@@ -524,12 +563,14 @@ kubectl apply -f ${TFPATH}/net_script/id38_cifar10_densenet100_k12_sync_batch128
 wait_for_pod_scheduling id38_cifar10_densenet100_k12_sync_batch128 1
 
 
+
 # 작업: id39_cifar10_resnet44_sync_batch2048 (모델: resnet44, 워커: 2, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id39_cifar10_resnet44_sync_batch2048 2 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id39_cifar10_resnet44_sync_batch2048_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id39_cifar10_resnet44_sync_batch2048_colo.yaml
 wait_for_pod_scheduling id39_cifar10_resnet44_sync_batch2048 2
+
 
 
 # 작업: id40_imagenet_googlenet_sync_batch2048 (모델: googlenet, 워커: 8, 도착시간: 0초)
@@ -540,12 +581,14 @@ kubectl apply -f ${TFPATH}/net_script/id40_imagenet_googlenet_sync_batch2048_col
 wait_for_pod_scheduling id40_imagenet_googlenet_sync_batch2048 8
 
 
-# 작업: id41_speech_whisper_sync_batch8 (모델: whisper, 워커: 2, 도착시간: 0초)
-wait_for_resources_or_arrival 0 id41_speech_whisper_sync_batch8 2 colo
+
+# 작업: id41_imagenet_inception3_sync_batch128 (모델: inception3, 워커: 2, 도착시간: 0초)
+wait_for_resources_or_arrival 0 id41_imagenet_inception3_sync_batch128 2 colo
 # 작업 생성 시간 기록
-echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id41_speech_whisper_sync_batch8_job_create.txt
-kubectl apply -f ${TFPATH}/net_script/id41_speech_whisper_sync_batch8_colo.yaml
-wait_for_pod_scheduling id41_speech_whisper_sync_batch8 2
+echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id41_imagenet_inception3_sync_batch128_job_create.txt
+kubectl apply -f ${TFPATH}/net_script/id41_imagenet_inception3_sync_batch128_colo.yaml
+wait_for_pod_scheduling id41_imagenet_inception3_sync_batch128 2
+
 
 
 # 작업: id42_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 0초)
@@ -556,12 +599,14 @@ kubectl apply -f ${TFPATH}/net_script/id42_cifar10_densenet100_k12_sync_batch102
 wait_for_pod_scheduling id42_cifar10_densenet100_k12_sync_batch1024 8
 
 
+
 # 작업: id43_cifar10_alexnet_sync_batch32768 (모델: alexnet, 워커: 8, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id43_cifar10_alexnet_sync_batch32768 8 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id43_cifar10_alexnet_sync_batch32768_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id43_cifar10_alexnet_sync_batch32768_colo.yaml
 wait_for_pod_scheduling id43_cifar10_alexnet_sync_batch32768 8
+
 
 
 # 작업: id44_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 0초)
@@ -572,12 +617,14 @@ kubectl apply -f ${TFPATH}/net_script/id44_cifar10_densenet100_k12_sync_batch102
 wait_for_pod_scheduling id44_cifar10_densenet100_k12_sync_batch1024 8
 
 
+
 # 작업: id45_imagenet_inception3_sync_batch256 (모델: inception3, 워커: 4, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id45_imagenet_inception3_sync_batch256 4 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id45_imagenet_inception3_sync_batch256_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id45_imagenet_inception3_sync_batch256_colo.yaml
 wait_for_pod_scheduling id45_imagenet_inception3_sync_batch256 4
+
 
 
 # 작업: id46_cifar10_alexnet_sync_batch32768 (모델: alexnet, 워커: 8, 도착시간: 0초)
@@ -588,12 +635,14 @@ kubectl apply -f ${TFPATH}/net_script/id46_cifar10_alexnet_sync_batch32768_colo.
 wait_for_pod_scheduling id46_cifar10_alexnet_sync_batch32768 8
 
 
+
 # 작업: id47_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id47_cifar10_densenet100_k12_sync_batch1024 8 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id47_cifar10_densenet100_k12_sync_batch1024_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id47_cifar10_densenet100_k12_sync_batch1024_colo.yaml
 wait_for_pod_scheduling id47_cifar10_densenet100_k12_sync_batch1024 8
+
 
 
 # 작업: id48_cifar10_densenet100_k12_sync_batch512 (모델: densenet100_k12, 워커: 4, 도착시간: 0초)
@@ -604,12 +653,14 @@ kubectl apply -f ${TFPATH}/net_script/id48_cifar10_densenet100_k12_sync_batch512
 wait_for_pod_scheduling id48_cifar10_densenet100_k12_sync_batch512 4
 
 
+
 # 작업: id49_cifar10_resnet110_sync_batch4096 (모델: resnet110, 워커: 4, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id49_cifar10_resnet110_sync_batch4096 4 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id49_cifar10_resnet110_sync_batch4096_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id49_cifar10_resnet110_sync_batch4096_colo.yaml
 wait_for_pod_scheduling id49_cifar10_resnet110_sync_batch4096 4
+
 
 
 # 작업: id50_cifar10_alexnet_sync_batch16384 (모델: alexnet, 워커: 4, 도착시간: 0초)
@@ -620,12 +671,14 @@ kubectl apply -f ${TFPATH}/net_script/id50_cifar10_alexnet_sync_batch16384_colo.
 wait_for_pod_scheduling id50_cifar10_alexnet_sync_batch16384 4
 
 
+
 # 작업: id51_cifar10_alexnet_sync_batch16384 (모델: alexnet, 워커: 4, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id51_cifar10_alexnet_sync_batch16384 4 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id51_cifar10_alexnet_sync_batch16384_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id51_cifar10_alexnet_sync_batch16384_colo.yaml
 wait_for_pod_scheduling id51_cifar10_alexnet_sync_batch16384 4
+
 
 
 # 작업: id52_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 0초)
@@ -636,12 +689,14 @@ kubectl apply -f ${TFPATH}/net_script/id52_cifar10_densenet100_k12_sync_batch102
 wait_for_pod_scheduling id52_cifar10_densenet100_k12_sync_batch1024 8
 
 
+
 # 작업: id53_cifar10_resnet44_sync_batch8192 (모델: resnet44, 워커: 8, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id53_cifar10_resnet44_sync_batch8192 8 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id53_cifar10_resnet44_sync_batch8192_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id53_cifar10_resnet44_sync_batch8192_colo.yaml
 wait_for_pod_scheduling id53_cifar10_resnet44_sync_batch8192 8
+
 
 
 # 작업: id54_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 0초)
@@ -652,12 +707,14 @@ kubectl apply -f ${TFPATH}/net_script/id54_cifar10_densenet100_k12_sync_batch102
 wait_for_pod_scheduling id54_cifar10_densenet100_k12_sync_batch1024 8
 
 
+
 # 작업: id55_cifar10_densenet100_k12_sync_batch512 (모델: densenet100_k12, 워커: 4, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id55_cifar10_densenet100_k12_sync_batch512 4 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id55_cifar10_densenet100_k12_sync_batch512_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id55_cifar10_densenet100_k12_sync_batch512_colo.yaml
 wait_for_pod_scheduling id55_cifar10_densenet100_k12_sync_batch512 4
+
 
 
 # 작업: id56_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 0초)
@@ -668,12 +725,14 @@ kubectl apply -f ${TFPATH}/net_script/id56_cifar10_densenet100_k12_sync_batch102
 wait_for_pod_scheduling id56_cifar10_densenet100_k12_sync_batch1024 8
 
 
+
 # 작업: id57_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id57_cifar10_densenet100_k12_sync_batch1024 8 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id57_cifar10_densenet100_k12_sync_batch1024_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id57_cifar10_densenet100_k12_sync_batch1024_colo.yaml
 wait_for_pod_scheduling id57_cifar10_densenet100_k12_sync_batch1024 8
+
 
 
 # 작업: id58_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 0초)
@@ -684,12 +743,14 @@ kubectl apply -f ${TFPATH}/net_script/id58_cifar10_densenet100_k12_sync_batch102
 wait_for_pod_scheduling id58_cifar10_densenet100_k12_sync_batch1024 8
 
 
+
 # 작업: id59_cifar10_densenet100_k12_sync_batch1024 (모델: densenet100_k12, 워커: 8, 도착시간: 0초)
 wait_for_resources_or_arrival 0 id59_cifar10_densenet100_k12_sync_batch1024 8 colo
 # 작업 생성 시간 기록
 echo "$(date "+%H:%M:%S.%N")" > ${SAVEPATH}/id59_cifar10_densenet100_k12_sync_batch1024_job_create.txt
 kubectl apply -f ${TFPATH}/net_script/id59_cifar10_densenet100_k12_sync_batch1024_colo.yaml
 wait_for_pod_scheduling id59_cifar10_densenet100_k12_sync_batch1024 8
+
 
 
 
@@ -707,4 +768,4 @@ kubectl logs -n kube-system tensorspot-scheduler > ${SAVEPATH}/scheduler_log.txt
 # On-prem
 # ssh xsailor2@163.152.20.132 "sudo sh /home/jhlee21/gpu_off.sh"
 # ssh xsailor3@163.152.20.155 "sudo sh /home/jhlee21/gpu_off.sh"
- 
+

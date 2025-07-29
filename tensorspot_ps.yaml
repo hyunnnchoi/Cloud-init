@@ -71,7 +71,7 @@ spec:
   containers:
   - name: tensorspot-scheduler
     # image: potato4332/tensorspot_ar:v0.0.1
-    image: potato4332/tensorspot_ar:tethys-v0.0.3
+    image: potato4332/tensorspot_ps:v0.0.1
     imagePullPolicy: Always
     # for gangbinpack, colocate
     # image: yeonhooy/tensorspot_ar:v10.7

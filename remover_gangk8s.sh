@@ -25,7 +25,7 @@ while true; do
       echo "$(date '+%Y-%m-%d %H:%M:%S') - 작업 $JOB_NAME (Pod: $pod) 삭제 시도"
       
       # 작업 삭제
-      kubectl delete -f ${TFPATH}/net_script/${JOB_NAME}_gangk8s.yaml
+      kubectl delete -f ${TFPATH}/net_script/${JOB_NAME}_k8s.yaml
       
       # 삭제 확인
       if [ $? -eq 0 ]; then

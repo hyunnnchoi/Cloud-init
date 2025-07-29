@@ -7,7 +7,7 @@ while true; do
   echo "$(date '+%Y-%m-%d %H:%M:%S') - Completed 상태 Pod 확인 중..."
   
   # Completed 상태의 controller 또는 chief Pod 찾기
-  COMPLETED_PODS=$(kubectl get pod | grep -e "controller-" -e "chief-" -e "worker-" | grep Completed | awk '{print $1}')
+  COMPLETED_PODS=$(kubectl get pod | grep -e "controller-" -e "chief-" -e "worker-" -e "ps-"| grep Completed | awk '{print $1}')
   
   if [ -n "$COMPLETED_PODS" ]; then
     echo "$(date '+%Y-%m-%d %H:%M:%S') - Completed 상태 Pod 발견: $(echo $COMPLETED_PODS | wc -w)개"

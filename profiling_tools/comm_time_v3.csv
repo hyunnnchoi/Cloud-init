@@ -1,0 +1,7 @@
+filename,avg_compute_time_sec,avg_network_time_sec
+id21_imagenet_googlenet_sync_batch512_worker_0_10.244.0.243_network.csv,0.2384,0.00993
+id22_imagenet_googlenet_sync_batch1024_worker_0_10.244.0.244_network.csv,0.23506,0.00993
+id23_imagenet_googlenet_sync_batch2048_worker_0_10.244.0.17_network.csv,0.24673,0.00993
+id25_imagenet_inception3_sync_batch128_worker_0_10.244.0.21_network.csv,0.295,0.00999
+id26_imagenet_inception3_sync_batch256_worker_0_10.244.0.27_network.csv,0.28833,0.00999
+id27_imagenet_inception3_sync_batch512_worker_0_10.244.0.36_network.csv,0.33838,0.00995

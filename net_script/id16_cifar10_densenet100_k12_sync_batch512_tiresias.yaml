@@ -33,7 +33,7 @@ spec:
                 echo "id16_cifar10_densenet100_k12_sync_batch512" > /tf_cnn_benchmarks/model.txt;
                 STARTTIME=`date "+%H:%M:%S.%N"`;
                 echo "$STARTTIME" > /result/id16_cifar10_densenet100_k12_sync_batch512/id16_cifar10_densenet100_k12_sync_batch512_${JOB}_start_time.txt;
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=parameter_server --model=densenet100_k12 --data_name=cifar10 --display_every=1 --batch_size=128 --cross_replica_sync=true --num_batches=1486 --num_warmup_batches=0;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=parameter_server --model=densenet100_k12 --data_name=cifar10 --display_every=1 --batch_size=128 --cross_replica_sync=true --num_batches=1310 --num_warmup_batches=0;
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id16_cifar10_densenet100_k12_sync_batch512/id16_cifar10_densenet100_k12_sync_batch512_${JOB}_end_time.txt
             ports:
@@ -83,7 +83,7 @@ spec:
                 mkdir -p /result/id16_cifar10_densenet100_k12_sync_batch512;
                 echo "id16_cifar10_densenet100_k12_sync_batch512" > /tf_cnn_benchmarks/model.txt;
                 top -d 0.1 -b | grep tf_cnn > /result/id16_cifar10_densenet100_k12_sync_batch512/id16_cifar10_densenet100_k12_sync_batch512_${JOB}_cpu.txt &
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=parameter_server --model=densenet100_k12 --data_name=cifar10 --display_every=1 --batch_size=128 --cross_replica_sync=true --num_batches=1486 --num_warmup_batches=0 > /result/id16_cifar10_densenet100_k12_sync_batch512/id16_cifar10_densenet100_k12_sync_batch512_${JOB}_log.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=parameter_server --model=densenet100_k12 --data_name=cifar10 --display_every=1 --batch_size=128 --cross_replica_sync=true --num_batches=1310 --num_warmup_batches=0 > /result/id16_cifar10_densenet100_k12_sync_batch512/id16_cifar10_densenet100_k12_sync_batch512_${JOB}_log.txt;
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id16_cifar10_densenet100_k12_sync_batch512/id16_cifar10_densenet100_k12_sync_batch512_${JOB}_end_time.txt
             ports:

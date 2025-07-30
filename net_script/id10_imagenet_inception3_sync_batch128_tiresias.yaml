@@ -13,7 +13,7 @@ spec:
           annotations:
             "tensorspot/num_ps": "2"
             "tensorspot/num_worker": "2"
-            "tensorspot/net_request": "0"
+            "tensorspot/net_request": "1298"
             "tensorspot/gpu_limit": "1.0"
             "tensorspot/gpu_request": "1.0"
             "tensorspot/gpu_mem": "17179869184"
@@ -70,7 +70,7 @@ spec:
           annotations:
             "tensorspot/num_ps": "2"
             "tensorspot/num_worker": "2"
-            "tensorspot/net_request": "0"
+            "tensorspot/net_request": "1298"
             "tensorspot/placement_policy": "tiresias"
             "tensorspot/skewness_level": "4.2"
         spec:

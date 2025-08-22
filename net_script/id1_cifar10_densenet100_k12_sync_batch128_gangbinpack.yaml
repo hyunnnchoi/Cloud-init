@@ -37,7 +37,7 @@ spec:
                 STARTTIME=`date "+%H:%M:%S.%N"`;
                 echo "$STARTTIME" > /result/id1_cifar10_densenet100_k12_sync_batch128/id1_cifar10_densenet100_k12_sync_batch128_${JOB}_start_time.txt;
 
-                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=replicated --model=densenet100_k12 --data_name=cifar10 --display_every=1 --batch_size=128 --num_batches=100 --num_warmup_batches=0 > /result/id1_cifar10_densenet100_k12_sync_batch128/id1_cifar10_densenet100_k12_sync_batch128_${JOB}_log.txt;
+                python /tf_cnn_benchmarks/tf_cnn_benchmarks.py --variable_update=replicated --model=densenet100_k12 --data_name=cifar10 --display_every=1 --batch_size=128 --num_batches=27273 --num_warmup_batches=0 > /result/id1_cifar10_densenet100_k12_sync_batch128/id1_cifar10_densenet100_k12_sync_batch128_${JOB}_log.txt;
 
                 ENDTIME=`date "+%H:%M:%S.%N"`;
                 echo "$ENDTIME" > /result/id1_cifar10_densenet100_k12_sync_batch128/id1_cifar10_densenet100_k12_sync_batch128_${JOB}_end_time.txt
